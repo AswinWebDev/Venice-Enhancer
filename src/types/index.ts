@@ -5,6 +5,7 @@ export interface ImageFile {
   preview: string; // Data URL for preview
   selected: boolean;
   status: 'idle' | 'scanning' | 'processing' | 'complete' | 'error';
+  progress?: number; // Added for upload/enhancement progress tracking
   enhanced?: string; // Data URL for enhanced image
   error?: string;
 }

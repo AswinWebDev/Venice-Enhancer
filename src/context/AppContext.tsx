@@ -47,7 +47,6 @@ interface AppContextType {
   isAdvancedOpen: boolean;
   isSidebarOpen: boolean;
   isScanningModalOpen: boolean;
-  scanningImageName: string;
   isGeneratingPrompt: boolean; 
   promptGenerationError: string | null; 
   successNotification: string | null; 
@@ -56,7 +55,7 @@ interface AppContextType {
   comparisonImages: { original: string; enhanced: string } | null; 
   
   // Actions
-  addImages: (files: File[]) => void;
+  addImages: (files: File[]) => Promise<void>;
   removeImage: (id: string) => void;
   selectImage: (id: string) => void;
   updateSettings: (newSettings: Partial<EnhanceSettings>) => void;
@@ -89,7 +88,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScanningModalOpen, setIsScanningModalOpen] = useState(false);
-  const [scanningImageName, setScanningImageName] = useState('');
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); 
   const [promptGenerationError, setPromptGenerationError] = useState<string | null>(null); 
   const [successNotification, setSuccessNotification] = useState<string | null>(null); 
@@ -132,64 +130,96 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [apiErrorNotification]);
 
-  const addImages = (files: File[]) => {
-    const newImages = files.map(file => ({
-      id: uuidv4(),
-      file,
-      preview: URL.createObjectURL(file),
-      selected: false,
-      status: 'idle' as const,
-    }));
-    
-    setImages(prev => [...prev, ...newImages]);
-    
-    if (newImages.length > 0) {
-      const firstNewImageId = newImages[0].id;
-      if (!selectedImageId) {
-        setSelectedImageId(firstNewImageId);
-      }
-      
-      setScanningImageName(newImages[0].file.name);
-      setIsScanningModalOpen(true);
-      
-      setTimeout(() => {
-        setImages(prev => 
-          prev.map(img => 
-            img.id === firstNewImageId ? { ...img, status: 'scanning' as const } : img
-          )
-        );
-        
-        setTimeout(async () => { 
-          setIsScanningModalOpen(false);            
-          
-          // Get the ImageFile object that we want to generate a prompt for.
-          // It should be in the `newImages` array created at the start of `addImages`.
-          const imageToProcessForPrompt = newImages.find(img => img.id === firstNewImageId);
+  const addImages = async (files: File[]) => {
+    const newImagesToAdd: ImageFile[] = [];
+    let newSelectedImageId: string | null = null;
+    const MAX_PIXELS = 4096 * 4096;
+    const MAX_FILE_SIZE_MB = 20;
 
-          // Update its status to 'idle'
-          setImages(prev =>                         
-            prev.map(img => 
-              img.id === firstNewImageId ? { ...img, status: 'idle' as const } : img
-            )
-          );
-          
-          // Now, call generatePromptFromImage with the found image object.
-          if (imageToProcessForPrompt) {
-            console.log("addImages: Calling generatePromptFromImage for image ID:", imageToProcessForPrompt.id);
-            await generatePromptFromImage(imageToProcessForPrompt);
-          } else {
-            console.error("addImages: CRITICAL - Could not find image in newImages array. ID:", firstNewImageId);
-            setPromptGenerationError("Internal error: Failed to prepare image for prompt.");
-          }
-        }, 2000); 
-      }, 500);
+    for (const file of Array.from(files)) {
+      if (images.length + newImagesToAdd.length >= 5) {
+        setApiErrorNotification('You can upload a maximum of 5 images.');
+        break; 
+      }
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setApiErrorNotification(`File ${file.name} is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`);
+        continue; 
+      }
+
+      try {
+        const dimensions = await new Promise<{width: number, height: number}>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          };
+          img.onerror = (err) => {
+            console.error("Error loading image for dimension check:", err);
+            reject(new Error(`Could not read image dimensions for ${file.name}. The file might be corrupted or not a valid image.`));
+          };
+          // Create an object URL for dimension checking. This needs to be revoked.
+          const objectUrl = URL.createObjectURL(file);
+          img.src = objectUrl;
+          // Revoke the object URL once the image is loaded or fails to load
+          img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve({ width: img.naturalWidth, height: img.naturalHeight });
+          };
+          img.onerror = (err) => {
+            URL.revokeObjectURL(objectUrl);
+            console.error("Error loading image for dimension check:", err);
+            reject(new Error(`Could not read image dimensions for ${file.name}. The file might be corrupted or not a valid image.`));
+          };
+        });
+
+        if (dimensions.width * dimensions.height > MAX_PIXELS) {
+          setApiErrorNotification(`Image ${file.name} is too large. Please use an image with a total of less than ${4096}x${4096} pixels.`);
+          continue; 
+        }
+      } catch (error: any) {
+        setApiErrorNotification(error.message || `Could not process ${file.name}.`);
+        continue; 
+      }
+
+      const imageId = uuidv4();
+      const newImage: ImageFile = {
+        id: imageId,
+        file,
+        name: file.name,
+        preview: URL.createObjectURL(file), // Changed back from url to preview
+        status: 'idle',
+        progress: 0,
+        selected: false, // Explicitly set selected to false for new images
+      };
+      newImagesToAdd.push(newImage);
+      if (!newSelectedImageId) {
+        newSelectedImageId = imageId;
+      }
+    }
+
+    if (newImagesToAdd.length > 0) {
+      setImages(prevImages => {
+        const updatedImages = [...prevImages, ...newImagesToAdd];
+        if (!selectedImageId && updatedImages.length > 0 && newSelectedImageId) {
+          setSelectedImageId(newSelectedImageId);
+        } else if (prevImages.length === 0 && updatedImages.length > 0 && newSelectedImageId) {
+          setSelectedImageId(newSelectedImageId);
+        }
+        return updatedImages;
+      });
+
+      newImagesToAdd.forEach(addedImage => {
+        // Check if prompt generation is enabled (e.g., based on a setting or if prompt is empty)
+        if (!settings.prompt) { 
+          generatePromptFromImage(addedImage);
+        }
+      });
     }
   };
 
   const removeImage = (id: string) => {
     const imageToRemove = images.find(img => img.id === id);
     if (imageToRemove) {
-      URL.revokeObjectURL(imageToRemove.preview);
+      URL.revokeObjectURL(imageToRemove.preview); // Changed back from url to preview
     }
     
     setImages(prev => prev.filter(img => img.id !== id));
@@ -311,7 +341,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
               const historyItem: HistoryItem = {
                 id: uuidv4(),
-                originalImage: img.preview, // Original image preview
+                originalImage: img.preview, // Changed back from url to preview
                 enhancedImage: enhancedImageUrl, // New enhanced image URL
                 settings: { ...settings }, // Current settings used for enhancement
                 timestamp: Date.now(),
@@ -323,7 +353,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           })
         );
         setSuccessNotification('Image enhanced successfully!');
-        openComparisonModal(imageToProcess.preview, enhancedImageUrl);
+        openComparisonModal(imageToProcess.preview, enhancedImageUrl); // Changed back from url to preview
       } else {
         let errorMessage = `API Error: ${response.status} ${response.statusText}`;
         try {
@@ -359,7 +389,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   const clearImages = () => {
     images.forEach(img => {
-      URL.revokeObjectURL(img.preview);
+      URL.revokeObjectURL(img.preview); // Changed back from url to preview
       if (img.enhanced) URL.revokeObjectURL(img.enhanced);
     });
     setImages([]);
@@ -492,7 +522,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isAdvancedOpen,
         isSidebarOpen,
         isScanningModalOpen,
-        scanningImageName,
         isGeneratingPrompt, 
         promptGenerationError, 
         successNotification, 
