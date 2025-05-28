@@ -1,11 +1,23 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Image } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const UploadArea: React.FC = () => {
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const breakpoint = 640; // Tailwind's sm breakpoint
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < breakpoint);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial check
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   const { addImages, images } = useApp();
-  const [isDragging, setIsDragging] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const imageFiles = acceptedFiles.filter(file => 
@@ -17,27 +29,40 @@ const UploadArea: React.FC = () => {
     }
   }, [addImages]);
 
-  const { getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
       'image/*': []
     },
-    onDragEnter: () => setIsDragging(true),
-    onDragLeave: () => setIsDragging(false),
-    onDropAccepted: () => setIsDragging(false),
-    onDropRejected: () => setIsDragging(false),
+    noDrag: isMobile,
   });
 
   if (images.length > 0) {
     return null;
   }
 
+  if (isMobile) {
+    return (
+      <div className="flex justify-center my-8">
+        <button
+          {...getRootProps({ className: 'py-3 px-6 bg-venice-red text-white rounded-lg font-semibold shadow-md hover:bg-venice-red-dark transition-colors flex items-center' })}
+          type="button"
+        >
+          <Upload size={20} className="mr-2" />
+          Upload Image
+        </button>
+        <input {...getInputProps()} />
+      </div>
+    );
+  }
+
+  // Desktop view (drag-and-drop box)
   return (
     <div 
       {...getRootProps()} 
       className={`
         relative w-full border-2 border-dashed rounded-lg p-8 text-center transition-all
-        ${isDragging 
+        ${isDragActive 
           ? 'border-venice-red bg-venice-red/5' 
           : 'border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'}
         h-80
@@ -48,10 +73,10 @@ const UploadArea: React.FC = () => {
       <input {...getInputProps()} />
       
       <div className={`
-        ${isDragging ? 'scale-110' : 'scale-100'} 
+        ${isDragActive ? 'scale-110' : 'scale-100'} 
         transition-transform duration-200
       `}>
-        {isDragging ? (
+        {isDragActive ? (
           <div className="text-venice-red">
             <Image size={48} className="mx-auto mb-4 opacity-80" />
             <p className="text-lg font-medium">Drop to upload</p>
