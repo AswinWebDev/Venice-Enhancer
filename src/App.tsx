@@ -28,7 +28,7 @@ function AppContent() {
       {/* Main Layout: Sidebar and Content Area */}
       <div className="flex h-full">
         {/* Sidebar */}
-        <Sidebar />
+        {/* <Sidebar /> */}
         
         {/* Main Content Area */}
         <div className="w-full pt-4">
