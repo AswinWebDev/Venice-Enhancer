@@ -26,12 +26,22 @@ function AppContent() {
       <main className="flex-grow w-full pt-4 pb-8">
         <div className="px-4 md:px-8 max-w-7xl xl:max-w-screen-2xl mx-auto">
           {images.length === 0 && (
-            <div className="my-12 text-center">
-              <h1 className="text-4xl font-bold mb-4 text-venice-deep-olive">Enhance Your Images</h1>
-              <p className="text-lg text-venice-dark-olive mb-8">
-                Upload an image and use our AI to upscale and enhance it with just a few clicks.
+            <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center px-4 py-12 sm:py-16 md:py-20">
+              <h1 
+                className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-venice-deep-olive leading-tight"
+                style={{ fontFamily: "'Mea Culpa', cursive", letterSpacing: '0.05em' }} // Applying Mea Culpa if desired, adjust as needed
+              >
+                Venice Enhancer
+              </h1>
+              <p className="text-lg sm:text-xl md:text-2xl text-venice-dark-olive mb-10 max-w-2xl">
+                Elevate your visuals. Effortlessly upscale and enhance your images with our cutting-edge AI, revealing stunning detail and clarity.
               </p>
-              <UploadArea />
+              <div className="w-full max-w-lg">
+                <UploadArea />
+              </div>
+              <p className="mt-10 text-sm text-venice-olive-brown">
+                Experience the art of AI-powered image perfection.
+              </p>
             </div>
           )}
             
@@ -61,8 +71,6 @@ function AppContent() {
         <ComparisonModal 
           isOpen={isComparisonModalOpen} 
           onClose={closeComparisonModal} 
-          originalImage={comparisonImages.original} 
-          enhancedImage={comparisonImages.enhanced} 
         />
       )}
 
