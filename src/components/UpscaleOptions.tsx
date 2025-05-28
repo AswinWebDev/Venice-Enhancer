@@ -160,7 +160,7 @@ const UpscaleOptions: React.FC = () => {
                   <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
                     <div className="flex items-center">
                       Creativity
-                      <Tooltip text="How much creative freedom the AI has when enhancing. Higher values let it invent new details, similar to a higher temperature in text models.">
+                      <Tooltip text="How much creative freedom the AI has. Higher values can lead to more imaginative and stylized results, but may deviate more from the original image. Lower values stick closer to the original." position="bottom">
                         <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
                       </Tooltip>
                     </div>
@@ -189,7 +189,7 @@ const UpscaleOptions: React.FC = () => {
                   <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
                     <div className="flex items-center">
                       Adherence
-                      <Tooltip text="How closely the output should adhere to the original image. Lower values allow more smoothing and AI interpretation. Higher values preserve details but may amplify imperfections or noise.">
+                      <Tooltip text="How closely the output should adhere to the original image. Lower values allow more smoothing and AI interpretation. Higher values preserve details but may amplify imperfections or noise." position="top">
                         <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
                       </Tooltip>
                     </div>

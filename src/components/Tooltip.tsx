@@ -14,12 +14,13 @@ const Tooltip: React.FC<TooltipProps> = ({ text, children, position = 'top' }) =
     // Basic positioning, can be enhanced with dynamic adjustments if needed
     switch (position) {
       case 'bottom':
-        return { top: '110%', left: '50%', transform: 'translateX(-50%)', marginTop: '0.5rem' };
+        return { top: '110%', left: '0', /*transform: 'translateX(-50%)',*/ marginTop: '0.5rem' };
       case 'left':
         return { top: '50%', right: '110%', transform: 'translateY(-50%)', marginRight: '0.5rem' };
       case 'right':
         return { top: '50%', left: '110%', transform: 'translateY(-50%)', marginLeft: '0.5rem' };
       case 'top':
+        return { bottom: '110%', left: '0', transform: 'translateY(50%)', marginLeft: '0.5rem'};
       default:
         return { bottom: '110%', left: '50%', transform: 'translateX(-50%)', marginBottom: '0.5rem' };
     }
