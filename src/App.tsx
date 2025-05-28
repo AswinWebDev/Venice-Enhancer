@@ -31,7 +31,7 @@ function AppContent() {
                 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-venice-deep-olive leading-tight"
                 style={{ fontFamily: "'Mea Culpa', cursive", letterSpacing: '0.05em' }} // Applying Mea Culpa if desired, adjust as needed
               >
-                Venice Enhancer
+               <span className="text-venice-bright-red">Venice</span> <span className="text-venice-deep-olive">Enhancer</span> 
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl text-venice-dark-olive mb-10 max-w-2xl">
                 Elevate your visuals. Effortlessly upscale and enhance your images with our cutting-edge AI, revealing stunning detail and clarity.
