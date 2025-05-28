@@ -9,7 +9,7 @@ const ImagePreview: React.FC = () => {
   if (images.length === 0) return null;
 
   return (
-    <div className="mt-6">
+    <div className="">
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-3">
         Uploaded Images ({images.length})
       </h3>

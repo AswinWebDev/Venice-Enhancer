@@ -26,7 +26,7 @@ const UpscaleOptions: React.FC = () => {
   const isProcessing = selectedImage?.status === 'processing';
 
   return (
-    <div className="mt-6">
+    <div className="">
       <div className="bg-white dark:bg-gray-850 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-800">
         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
           Enhancement Options
