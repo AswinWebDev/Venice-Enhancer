@@ -1,28 +1,46 @@
 import React from 'react';
 
-const ScanningAnimation: React.FC = () => {
+interface ScanningAnimationProps {
+  imageUrl: string;
+  progress: number; // 0 to 1, representing the scan line's position
+}
+
+const ScanningAnimation: React.FC<ScanningAnimationProps> = ({ imageUrl, progress }) => {
+  const scanPosition = progress * 100; // Convert progress to percentage
+
   return (
-    <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 flex items-center">
-        <div className="absolute w-full h-0.5 bg-venice-red animate-scanMove">
-          <div className="absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-transparent via-venice-light to-transparent animate-scanPulse"></div>
-        </div>
-      </div>
+    <div className="relative w-full h-full overflow-hidden">
+      {/* Grayscale image (bottom layer) */}
+      <img
+        src={imageUrl}
+        alt="Scanning background"
+        className="absolute inset-0 w-full h-full object-contain filter grayscale-[100%]"
+      />
       
-      <div className="absolute inset-0 border border-venice-red/30 grid grid-cols-4 grid-rows-4">
-        {Array.from({ length: 16 }).map((_, i) => (
-          <div key={i} className="border border-venice-red/20"></div>
-        ))}
+      {/* Color image (top layer, clipped) */}
+      <div
+        className="absolute inset-0 w-full h-full"
+        style={{
+          clipPath: `inset(0 0 ${100 - scanPosition}% 0)`,
+        }}
+      >
+        <img
+          src={imageUrl}
+          alt="Scanning foreground"
+          className="absolute inset-0 w-full h-full object-contain"
+        />
       </div>
-      
-      <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-venice-red"></div>
-      <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-venice-red"></div>
-      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-venice-red"></div>
-      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-venice-red"></div>
-      
-      <div className="text-white text-sm font-medium bg-black bg-opacity-50 px-2 py-1 rounded-md z-10">
-        Analyzing Image
-      </div>
+
+      {/* Scan line */}
+      {progress > 0 && progress < 1 && (
+        <div
+          className="absolute w-full h-0.5 bg-venice-red-dark opacity-75 shadow-lg"
+          style={{
+            top: `${scanPosition}%`,
+            transform: 'translateY(-50%)',
+          }}
+        />
+      )}
     </div>
   );
 };

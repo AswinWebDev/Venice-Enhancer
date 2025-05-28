@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { ImageFile } from '../types';
 import { Trash2, Eye, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+import ScanningAnimation from './ScanningAnimation';
 
 // Props for the individual image card in the grid
 interface ImageCardProps {
@@ -93,39 +94,61 @@ const ImagePreview: React.FC = () => {
   const {
     images,
     selectedImageId,
-    removeImage,
     selectImage,
-    enhanceImages, // General enhance for the currently selected image
-    openComparisonModal
+    removeImage,
+    enhanceImages, 
+    openComparisonModal,
+    isGeneratingPrompt, 
   } = useApp();
 
-  if (images.length === 0) return null;
+  const [scanAnimationProgress, setScanAnimationProgress] = useState(0);
+  const animationFrameId = useRef<number | null>(null);
 
-  // Determine the image to display in the main preview area
-  // Prioritize selectedImageId, fallback to the first image if none selected or selected is invalid
-  let imageToDisplay = images.find(img => img.id === selectedImageId);
-  if (!imageToDisplay && images.length > 0) {
-    imageToDisplay = images[0];
-    // Optionally, select the first image if no valid selection exists
-    // This depends on desired UX, for now, we just display it without changing selectedImageId
-  }
+  const imageToDisplay = images.find(img => img.id === selectedImageId);
 
-  if (!imageToDisplay) return null; // Should not happen if images.length > 0
+  useEffect(() => {
+    if (isGeneratingPrompt && imageToDisplay) {
+      let startTime: number | null = null;
+      const duration = 2000; // Scan duration in milliseconds (e.g., 2 seconds)
 
-  const canEnhanceDisplayed = imageToDisplay.status === 'idle' || imageToDisplay.status === 'error' || imageToDisplay.status === 'complete';
-  const canCompareDisplayed = imageToDisplay.status === 'complete' && imageToDisplay.enhanced;
+      const animateScan = (timestamp: number) => {
+        if (!startTime) {
+          startTime = timestamp;
+        }
+        const elapsedTime = timestamp - startTime;
+        let progress = elapsedTime / duration;
 
-  const handleEnhanceSingleImageInGrid = (id: string) => {
-    // If the image to enhance from grid is not the currently selected one for main display,
-    // select it first, then enhance.
+        if (progress >= 1) {
+          progress = 0; // Reset for continuous loop
+          startTime = timestamp; // Reset start time for seamless loop
+        }
+        
+        setScanAnimationProgress(progress);
+        animationFrameId.current = requestAnimationFrame(animateScan);
+      };
+
+      animationFrameId.current = requestAnimationFrame(animateScan);
+    } else {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+        animationFrameId.current = null;
+      }
+      setScanAnimationProgress(0); // Reset progress when not generating or no image
+    }
+
+    return () => {
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
+  }, [isGeneratingPrompt, imageToDisplay]);
+
+  const handleEnhanceSingleImageInGrid = async (id: string) => {
     if (selectedImageId !== id) {
       selectImage(id);
-      // enhanceImages will use the new selectedImageId from context after state update
-      // Using a timeout can help ensure state is updated, though not always guaranteed.
-      // A more robust way would be to pass the image object directly to enhanceImages if context supports it.
       setTimeout(() => enhanceImages(), 0); 
     } else {
-      enhanceImages(); // Enhance the already selected image
+      enhanceImages(); 
     }
   };
 
@@ -133,77 +156,90 @@ const ImagePreview: React.FC = () => {
     <div className="w-full bg-venice-cream-dark rounded-lg shadow-lg">
       {/* Main Image Display Area */}
       <div className="mb-6 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-xl relative aspect-video sm:aspect-[4/3] md:aspect-video lg:aspect-[16/9]">
-        <img 
-          src={imageToDisplay.enhanced || imageToDisplay.preview} 
-          alt={imageToDisplay.name || 'Selected image'} 
-          className="w-full h-full object-contain rounded-md"
-        />
-        {/* Actions for the main displayed image */}
-        <div className="absolute top-2 right-2 flex flex-col space-y-2 z-10">
-         
-          {canCompareDisplayed && imageToDisplay.enhanced && (
-            <button 
-              onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
-              className="p-2 rounded-full transition-colors shadow-md"
-              aria-label="View & Compare Selected Image"
-              title="View & Compare"
-              style={{
-                backgroundColor: '#5a4d14',
-                color: '#ffffff'
-              }}
-            >
-              <Eye size={20} />
-            </button>
-          )}
-          <button 
-            onClick={() => removeImage(imageToDisplay!.id)} 
-            className="p-2 rounded-full transition-colors shadow-md"
-            aria-label="Remove Selected Image"
-            title="Remove Image"
-            style={{
-              backgroundColor: '#ff0000',
-              color: '#ffffff'
-            }}
-          >
-            <Trash2 size={20} />
-          </button>
-        </div>
-        {/* Status indicator for main displayed image */}
-        <div className="absolute bottom-2 left-2 z-10">
-          {imageToDisplay.status === 'processing' && 
-            <div 
-              className='flex items-center text-xs px-2 py-1 rounded-full'
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ffffff' }}
-            >
-              <RefreshCw size={14} className="animate-spin mr-1.5" /> Processing...
-            </div>}
-          {imageToDisplay.status === 'scanning' && 
-            <div 
-              className='flex items-center text-xs px-2 py-1 rounded-full'
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ffffff' }}
-            >
-              <RefreshCw size={14} className="animate-spin mr-1.5" /> Analyzing...
-            </div>}
-          {imageToDisplay.status === 'complete' && 
-            <div 
-              className='flex items-center text-xs px-2 py-1 rounded-full'
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#fdfcf8' /* Lime Green */ }}
-            >
-              <CheckCircle size={14} className="mr-1.5" /> Enhanced
-            </div>}
-          {imageToDisplay.status === 'error' && 
-            <div 
-              className='flex items-center text-xs px-2 py-1 rounded-full' 
-              title={imageToDisplay.error}
-              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ff4d4d' /* venice-light */ }}
-            >
-              <AlertTriangle size={14} className="mr-1.5" /> Error
-            </div>}
-        </div>
-        {imageToDisplay.error && imageToDisplay.status === 'error' && (
-          <p className="absolute bottom-8 left-2 text-xs text-red-400 bg-gray-900/70 p-1 rounded max-w-[calc(100%-1rem)] truncate z-10">
-            {imageToDisplay.error}
-          </p>
+        {imageToDisplay ? (
+          <>
+            {isGeneratingPrompt ? (
+              <div className="absolute inset-0 w-full h-full">
+                <ScanningAnimation imageUrl={imageToDisplay.preview} progress={scanAnimationProgress} />
+              </div>
+            ) : (
+              <img 
+                src={imageToDisplay.enhanced || imageToDisplay.preview} 
+                alt={imageToDisplay.name || 'Selected image'} 
+                className="absolute inset-0 w-full h-full object-contain rounded-md"
+              />
+            )}
+            {/* Actions for the main displayed image */}
+            <div className="absolute top-2 right-2 flex flex-col space-y-2 z-10">
+              {imageToDisplay.status === 'complete' && imageToDisplay.enhanced && (
+                <button 
+                  onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
+                  className="p-2 rounded-full transition-colors shadow-md"
+                  aria-label="View & Compare Selected Image"
+                  title="View & Compare"
+                  style={{
+                    backgroundColor: '#5a4d14',
+                    color: '#ffffff'
+                  }}
+                >
+                  <Eye size={20} />
+                </button>
+              )}
+              <button 
+                onClick={() => removeImage(imageToDisplay!.id)} 
+                className="p-2 rounded-full transition-colors shadow-md"
+                aria-label="Remove Selected Image"
+                title="Remove Image"
+                style={{
+                  backgroundColor: '#ff0000',
+                  color: '#ffffff'
+                }}
+              >
+                <Trash2 size={20} />
+              </button>
+            </div>
+            {/* Status indicator for main displayed image */}
+            <div className="absolute bottom-2 left-2 z-10">
+              {imageToDisplay.status === 'processing' && 
+                <div 
+                  className='flex items-center text-xs px-2 py-1 rounded-full'
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ffffff' }}
+                >
+                  <RefreshCw size={14} className="animate-spin mr-1.5" /> Processing...
+                </div>}
+              {imageToDisplay.status === 'scanning' && 
+                <div 
+                  className='flex items-center text-xs px-2 py-1 rounded-full'
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ffffff' }}
+                >
+                  <RefreshCw size={14} className="animate-spin mr-1.5" /> Analyzing...
+                </div>}
+              {imageToDisplay.status === 'complete' && 
+                <div 
+                  className='flex items-center text-xs px-2 py-1 rounded-full'
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#fdfcf8' /* Lime Green */ }}
+                >
+                  <CheckCircle size={14} className="mr-1.5" /> Enhanced
+                </div>}
+              {imageToDisplay.status === 'error' && 
+                <div 
+                  className='flex items-center text-xs px-2 py-1 rounded-full' 
+                  title={imageToDisplay.error}
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ff4d4d' /* venice-light */ }}
+                >
+                  <AlertTriangle size={14} className="mr-1.5" /> Error
+                </div>}
+            </div>
+            {imageToDisplay.error && imageToDisplay.status === 'error' && (
+              <p className="absolute bottom-8 left-2 text-xs text-red-400 bg-gray-900/70 p-1 rounded max-w-[calc(100%-1rem)] truncate z-10">
+                {imageToDisplay.error}
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="text-lg font-bold text-gray-400 dark:text-gray-600">No image selected</div>
+          </div>
         )}
       </div>
 
@@ -216,7 +252,7 @@ const ImagePreview: React.FC = () => {
               <ImageCard 
                 key={img.id} 
                 image={img} 
-                isSelectedInGrid={img.id === selectedImageId} // Pass if this card is the one selected in context
+                isSelectedInGrid={img.id === selectedImageId} 
                 onSelect={selectImage} 
                 onRemove={removeImage} 
                 onEnhanceSingleInGrid={handleEnhanceSingleImageInGrid}
