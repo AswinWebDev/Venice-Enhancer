@@ -28,7 +28,7 @@ function AppContent() {
       <Header />
       
       <main className="flex-grow w-full pt-4 pb-8">
-        <div className="px-4 md:px-8 max-w-5xl mx-auto">
+        <div className="px-4 md:px-8 max-w-7xl mx-auto">
           {images.length === 0 && (
             <div className="my-12 text-center">
               <h1 className="text-4xl font-bold mb-4 text-venice-deep-olive">Enhance Your Images</h1>

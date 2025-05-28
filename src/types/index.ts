@@ -1,10 +1,11 @@
 export interface ImageFile {
   id: string;
-  file: File;
-  preview: string;
+  file: File; // Original file object, might not be needed long-term if preview is generated
+  name: string; // Added to store the original file name
+  preview: string; // Data URL for preview
   selected: boolean;
   status: 'idle' | 'scanning' | 'processing' | 'complete' | 'error';
-  enhanced?: string;
+  enhanced?: string; // Data URL for enhanced image
   error?: string;
 }
 
