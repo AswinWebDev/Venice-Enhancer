@@ -52,7 +52,7 @@ const ImageCard: React.FC<ImageCardProps> = ({
             <button 
               onClick={(e) => { 
                 e.stopPropagation(); 
-                openComparisonModal(image.preview, image.enhanced!); 
+                openComparisonModal(image.preview, image.enhanced!, image.operationType!); 
               }}
               className="p-1.5 bg-black/60 hover:bg-venice-blue-dark/80 rounded-full text-white transition-colors"
               aria-label="View & Compare"
@@ -184,7 +184,7 @@ const ImagePreview: React.FC = () => {
             <div className="absolute top-2 right-2 flex flex-col space-y-2 z-10">
               {imageToDisplay.status === 'complete' && imageToDisplay.enhanced && (
                 <button 
-                  onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
+                  onClick={() => openComparisonModal(imageToDisplay.preview, imageToDisplay.enhanced!, imageToDisplay.operationType!)}
                   className="p-2 rounded-full transition-colors shadow-md"
                   aria-label="View & Compare Selected Image"
                   title="View & Compare"
@@ -230,7 +230,7 @@ const ImagePreview: React.FC = () => {
                   className='flex items-center text-xs px-2 py-1 rounded-full'
                   style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#fdfcf8' /* Lime Green */ }}
                 >
-                  <CheckCircle size={14} className="mr-1.5" /> Enhanced
+                  <CheckCircle size={14} className="mr-1.5" /> {imageToDisplay.operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
                 </div>}
               {imageToDisplay.status === 'error' && 
                 <div 
