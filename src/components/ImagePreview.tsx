@@ -171,19 +171,32 @@ const ImagePreview: React.FC = () => {
         {/* Status indicator for main displayed image */}
         <div className="absolute bottom-2 left-2 z-10">
           {imageToDisplay.status === 'processing' && 
-            <div className='flex items-center bg-black/60 text-white text-xs px-2 py-1 rounded-full'>
+            <div 
+              className='flex items-center text-xs px-2 py-1 rounded-full'
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ffffff' }}
+            >
               <RefreshCw size={14} className="animate-spin mr-1.5" /> Processing...
             </div>}
           {imageToDisplay.status === 'scanning' && 
-            <div className='flex items-center bg-black/60 text-white text-xs px-2 py-1 rounded-full'>
+            <div 
+              className='flex items-center text-xs px-2 py-1 rounded-full'
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ffffff' }}
+            >
               <RefreshCw size={14} className="animate-spin mr-1.5" /> Analyzing...
             </div>}
           {imageToDisplay.status === 'complete' && 
-            <div className='flex items-center bg-black/60 text-venice-green-light text-xs px-2 py-1 rounded-full'>
+            <div 
+              className='flex items-center text-xs px-2 py-1 rounded-full'
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#fdfcf8' /* Lime Green */ }}
+            >
               <CheckCircle size={14} className="mr-1.5" /> Enhanced
             </div>}
           {imageToDisplay.status === 'error' && 
-            <div className='flex items-center bg-black/60 text-venice-red-light text-xs px-2 py-1 rounded-full' title={imageToDisplay.error}>
+            <div 
+              className='flex items-center text-xs px-2 py-1 rounded-full' 
+              title={imageToDisplay.error}
+              style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', color: '#ff4d4d' /* venice-light */ }}
+            >
               <AlertTriangle size={14} className="mr-1.5" /> Error
             </div>}
         </div>
