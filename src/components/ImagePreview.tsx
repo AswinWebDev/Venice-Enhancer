@@ -98,42 +98,53 @@ const ImagePreview: React.FC = () => {
     removeImage,
     enhanceImages, 
     openComparisonModal,
-    isGeneratingPrompt, 
   } = useApp();
 
   const [scanAnimationProgress, setScanAnimationProgress] = useState(0);
   const animationFrameId = useRef<number | null>(null);
+  const [isScanningDown, setIsScanningDown] = useState(true);
 
   const imageToDisplay = images.find(img => img.id === selectedImageId);
 
   useEffect(() => {
-    if (isGeneratingPrompt && imageToDisplay) {
+    const shouldAnimate = imageToDisplay?.status === 'scanning';
+
+    if (shouldAnimate) {
       let startTime: number | null = null;
-      const duration = 2000; // Scan duration in milliseconds (e.g., 2 seconds)
+      const duration = 2000; // Scan duration for one sweep (e.g., 2 seconds)
 
       const animateScan = (timestamp: number) => {
         if (!startTime) {
           startTime = timestamp;
         }
-        const elapsedTime = timestamp - startTime;
-        let progress = elapsedTime / duration;
+        const elapsedTimeSinceLastDirectionChange = timestamp - startTime;
+        let currentSweepProgress = elapsedTimeSinceLastDirectionChange / duration;
 
-        if (progress >= 1) {
-          progress = 0; // Reset for continuous loop
-          startTime = timestamp; // Reset start time for seamless loop
+        if (currentSweepProgress >= 1) {
+          currentSweepProgress = 0; 
+          startTime = timestamp;    
+          setIsScanningDown(prevDirection => !prevDirection); 
         }
         
-        setScanAnimationProgress(progress);
+        if (isScanningDown) {
+          setScanAnimationProgress(currentSweepProgress);
+        } else { 
+          setScanAnimationProgress(1 - currentSweepProgress);
+        }
+
         animationFrameId.current = requestAnimationFrame(animateScan);
       };
 
+      setIsScanningDown(true);
+      setScanAnimationProgress(0);
       animationFrameId.current = requestAnimationFrame(animateScan);
     } else {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
         animationFrameId.current = null;
       }
-      setScanAnimationProgress(0); // Reset progress when not generating or no image
+      setScanAnimationProgress(0); 
+      setIsScanningDown(true); 
     }
 
     return () => {
@@ -141,7 +152,7 @@ const ImagePreview: React.FC = () => {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [isGeneratingPrompt, imageToDisplay]);
+  }, [imageToDisplay?.status, isScanningDown]);
 
   const handleEnhanceSingleImageInGrid = async (id: string) => {
     if (selectedImageId !== id) {
@@ -158,7 +169,7 @@ const ImagePreview: React.FC = () => {
       <div className="mb-6 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-xl relative aspect-video sm:aspect-[4/3] md:aspect-video lg:aspect-[16/9]">
         {imageToDisplay ? (
           <>
-            {isGeneratingPrompt ? (
+            {imageToDisplay.status === 'scanning' ? (
               <div className="absolute inset-0 w-full h-full">
                 <ScanningAnimation imageUrl={imageToDisplay.preview} progress={scanAnimationProgress} />
               </div>

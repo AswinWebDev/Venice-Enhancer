@@ -130,108 +130,157 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [apiErrorNotification]);
 
+  const triggerPromptGeneration = (imageToProcess: ImageFile | null) => {
+    if (!imageToProcess) {
+      updateSettings({ prompt: "" });
+      console.log("[triggerPromptGeneration] No image to process, cleared prompt.");
+      return;
+    }
+
+    // Check if a prompt is already being generated for THIS specific image ID
+    // This is a local check to prevent re-triggering for the same image if called in quick succession
+    // The global isGeneratingPrompt is the main gatekeeper for concurrent API calls.
+    if (imageToProcess.status === 'scanning') { 
+        console.log(`[triggerPromptGeneration] Skipped for ${imageToProcess.id}, already in 'scanning' state.`);
+        return;
+    }
+
+    if (!isGeneratingPrompt) {
+      console.log(`[triggerPromptGeneration] Attempting for image: ${imageToProcess.id}`);
+      updateSettings({ prompt: "" }); // Clear previous global prompt from settings/UI
+      generatePromptFromImage(imageToProcess);
+    } else {
+      console.log(`[triggerPromptGeneration] Skipped for ${imageToProcess.id}, another prompt generation in progress (global isGeneratingPrompt).`);
+    }
+  };
+
   const addImages = async (files: File[]) => {
+    setIsScanningModalOpen(true);
     const newImagesToAdd: ImageFile[] = [];
-    let newSelectedImageId: string | null = null;
+    let newlySelectedImageForPrompt: ImageFile | null = null;
+
     const MAX_PIXELS = 4096 * 4096;
     const MAX_FILE_SIZE_MB = 20;
 
     for (const file of Array.from(files)) {
       if (images.length + newImagesToAdd.length >= 5) {
         setApiErrorNotification('You can upload a maximum of 5 images.');
-        break; 
+        break;
       }
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         setApiErrorNotification(`File ${file.name} is too large. Max size is ${MAX_FILE_SIZE_MB}MB.`);
-        continue; 
+        continue;
       }
 
       try {
-        const dimensions = await new Promise<{width: number, height: number}>((resolve, reject) => {
+        // Dimension check
+        const dimensions = await new Promise<{ width: number; height: number }>((resolve, reject) => {
           const img = new Image();
-          img.onload = () => {
-            resolve({ width: img.naturalWidth, height: img.naturalHeight });
-          };
-          img.onerror = (err) => {
-            console.error("Error loading image for dimension check:", err);
-            reject(new Error(`Could not read image dimensions for ${file.name}. The file might be corrupted or not a valid image.`));
-          };
-          // Create an object URL for dimension checking. This needs to be revoked.
           const objectUrl = URL.createObjectURL(file);
-          img.src = objectUrl;
-          // Revoke the object URL once the image is loaded or fails to load
           img.onload = () => {
-            URL.revokeObjectURL(objectUrl);
+            URL.revokeObjectURL(objectUrl); // Revoke immediately after getting dimensions
             resolve({ width: img.naturalWidth, height: img.naturalHeight });
           };
           img.onerror = (err) => {
             URL.revokeObjectURL(objectUrl);
             console.error("Error loading image for dimension check:", err);
-            reject(new Error(`Could not read image dimensions for ${file.name}. The file might be corrupted or not a valid image.`));
+            reject(new Error(`Could not read image dimensions for ${file.name}.`));
           };
+          img.src = objectUrl;
         });
 
         if (dimensions.width * dimensions.height > MAX_PIXELS) {
-          setApiErrorNotification(`Image ${file.name} is too large. Please use an image with a total of less than ${4096}x${4096} pixels.`);
-          continue; 
+          setApiErrorNotification(`Image ${file.name} (${dimensions.width}x${dimensions.height}) is too large. Max dimensions ${4096}x${4096} pixels.`);
+          continue;
         }
       } catch (error: any) {
         setApiErrorNotification(error.message || `Could not process ${file.name}.`);
-        continue; 
+        continue;
       }
 
       const imageId = uuidv4();
       const newImage: ImageFile = {
         id: imageId,
-        file,
+        file: file, // Store the original file object
         name: file.name,
-        preview: URL.createObjectURL(file), // Changed back from url to preview
+        preview: URL.createObjectURL(file), // Create object URL for preview
         status: 'idle',
         progress: 0,
-        selected: false, // Explicitly set selected to false for new images
+        selected: false,
       };
       newImagesToAdd.push(newImage);
-      if (!newSelectedImageId) {
-        newSelectedImageId = imageId;
+    }
+    setIsScanningModalOpen(false);
+
+    if (newImagesToAdd.length > 0) {
+      setImages(prevImages => [...prevImages, ...newImagesToAdd]);
+      
+      // If no image was previously selected, select the first of the newly added images
+      // and mark it for prompt generation.
+      if (!selectedImageId && newImagesToAdd.length > 0) {
+        const firstNewImage = newImagesToAdd[0];
+        setSelectedImageId(firstNewImage.id);
+        newlySelectedImageForPrompt = firstNewImage; 
       }
     }
 
-    if (newImagesToAdd.length > 0) {
-      setImages(prevImages => {
-        const updatedImages = [...prevImages, ...newImagesToAdd];
-        if (!selectedImageId && updatedImages.length > 0 && newSelectedImageId) {
-          setSelectedImageId(newSelectedImageId);
-        } else if (prevImages.length === 0 && updatedImages.length > 0 && newSelectedImageId) {
-          setSelectedImageId(newSelectedImageId);
-        }
-        return updatedImages;
-      });
-
-      newImagesToAdd.forEach(addedImage => {
-        // Check if prompt generation is enabled (e.g., based on a setting or if prompt is empty)
-        if (!settings.prompt) { 
-          generatePromptFromImage(addedImage);
-        }
-      });
+    // Trigger prompt generation outside the setImages updater, after state has likely updated
+    if (newlySelectedImageForPrompt) {
+        triggerPromptGeneration(newlySelectedImageForPrompt);
     }
   };
 
   const removeImage = (id: string) => {
-    const imageToRemove = images.find(img => img.id === id);
-    if (imageToRemove) {
-      URL.revokeObjectURL(imageToRemove.preview); // Changed back from url to preview
+    let imageToRevokePreview: ImageFile | undefined;
+    let nextSelectedImageForPrompt: ImageFile | null = null;
+
+    setImages(prevImages => {
+      imageToRevokePreview = prevImages.find(img => img.id === id);
+      const remainingImages = prevImages.filter(img => img.id !== id);
+      
+      if (selectedImageId === id) {
+        if (remainingImages.length > 0) {
+          const newSelectedImage = remainingImages[0];
+          setSelectedImageId(newSelectedImage.id);
+          nextSelectedImageForPrompt = newSelectedImage;
+        } else {
+          setSelectedImageId(null);
+          nextSelectedImageForPrompt = null; // Signal to clear prompt
+        }
+      }
+      return remainingImages;
+    });
+
+    if (imageToRevokePreview) {
+      URL.revokeObjectURL(imageToRevokePreview.preview);
     }
-    
-    setImages(prev => prev.filter(img => img.id !== id));
-    
-    if (selectedImageId === id) {
-      const remainingImages = images.filter(img => img.id !== id);
-      setSelectedImageId(remainingImages.length > 0 ? remainingImages[0].id : null);
+
+    // Trigger prompt generation for the new selection or clear prompt
+    // Do this after state updates have settled.
+    // Need to handle the case where nextSelectedImageForPrompt is null (clear prompt)
+    // or an actual image (generate for it).
+    // The triggerPromptGeneration function handles null correctly.
+    if (selectedImageId === id || (selectedImageId === null && !nextSelectedImageForPrompt)) { // ensures it's called if selection changed or cleared
+        triggerPromptGeneration(nextSelectedImageForPrompt);
     }
   };
 
   const selectImage = (id: string) => {
+    const previouslySelectedId = selectedImageId;
     setSelectedImageId(id);
+    const image = images.find(img => img.id === id);
+    if (image && previouslySelectedId !== id) {
+      // If selection changes, and the new image doesn't have a prompt yet (or we always want to refresh)
+      // We might want to clear the global prompt or trigger generation for the newly selected one.
+      // For now, let's clear the global prompt and trigger generation if it's 'idle'.
+      if (image.status === 'idle' || !settings.prompt) { // or some other condition
+        updateSettings({ prompt: "" }); // Clear current prompt from UI
+        triggerPromptGeneration(image);
+      }
+      // If the image already has a prompt (e.g. loaded from history or previously generated and stored on ImageFile object)
+      // you might want to load that into settings.prompt instead.
+      // else if (image.generatedPrompt) { updateSettings({ prompt: image.generatedPrompt }); }
+    }
   };
 
   const updateSettings = (newSettings: Partial<EnhanceSettings>) => {
@@ -397,36 +446,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const generatePromptFromImage = async (imageToAnalyze: ImageFile) => { 
-    console.log("[generatePromptFromImage] Called for image ID:", imageToAnalyze?.id);
-    const apiKey = import.meta.env.VITE_VENICE_API_KEY;
-    if (!apiKey) {
-      console.error("[generatePromptFromImage] Venice API key not found.");
-      setPromptGenerationError('Configuration error: API key missing.');
-      setApiErrorNotification('Configuration error: API key missing.');
+    if (!imageToAnalyze || !imageToAnalyze.preview || !imageToAnalyze.file) {
+      console.error("[generatePromptFromImage] Invalid imageToAnalyze or missing preview/file for ID:", imageToAnalyze?.id);
+      setPromptGenerationError("Cannot generate prompt: Image data is missing.");
+      // Update specific image status to 'error' if it exists in the array
+      if (imageToAnalyze?.id) {
+        setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'error', error: 'Image data missing' } : img));
+      }
+      setIsGeneratingPrompt(false); 
       return;
     }
-    console.log("[generatePromptFromImage] API key found.");
 
-    if (!imageToAnalyze || !imageToAnalyze.file) {
-      console.error("[generatePromptFromImage] Invalid image data passed. Image ID:", imageToAnalyze?.id, "File exists:", !!imageToAnalyze?.file);
-      setPromptGenerationError('Internal error: Invalid image data for prompt generation.');
-      setApiErrorNotification('Internal error: Invalid image data for prompt generation.');
-      return;
-    }
-    console.log("[generatePromptFromImage] Image data appears valid. File name:", imageToAnalyze.file.name);
-
+    console.log("[generatePromptFromImage] Starting for image ID:", imageToAnalyze.id);
+    // Update specific image status to 'scanning' and clear any previous error
+    setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'scanning', error: undefined } : img));
     setIsGeneratingPrompt(true);
-    setPromptGenerationError(null);
+    setPromptGenerationError(null); // Clear global prompt generation error state
     console.log("[generatePromptFromImage] State set for prompt generation. Attempting fileToDataURL for image ID:", imageToAnalyze.id);
 
     try {
-      const imageDataUrl = await fileToDataURL(imageToAnalyze.file);
-      console.log("[generatePromptFromImage] fileToDataURL successful for image ID:", imageToAnalyze.id, "Data URL length:", imageDataUrl?.length);
-
+      const imageDataUrl = await fileToDataURL(imageToAnalyze.file); // Use the stored File object
       const options = {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${import.meta.env.VITE_VENICE_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -491,15 +534,22 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       const description = promptMatch ? promptMatch[1].trim() : content.trim();
 
       updateSettings({ prompt: description });
+      // Reset status to 'idle' and clear error on success
+      setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'idle', error: undefined } : img)); 
       console.log("[generatePromptFromImage] Prompt updated in settings for image ID:", imageToAnalyze.id);
 
-    } catch (error) {
+    } catch (error) { 
       console.error("[generatePromptFromImage] Error during prompt generation for image ID:", imageToAnalyze?.id, error);
-      setPromptGenerationError(error instanceof Error ? error.message : 'Failed to generate prompt.');
-      setApiErrorNotification(error instanceof Error ? error.message : 'Failed to generate prompt.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to generate prompt.';
+      setPromptGenerationError(errorMessage); // Set global prompt generation error
+      setApiErrorNotification(errorMessage); // Show notification
+      // Update specific image status to 'error' and set the error message
+      if (imageToAnalyze?.id) {
+        setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'error', error: errorMessage } : img));
+      }
     }
     setIsGeneratingPrompt(false);
-    console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Error state:", promptGenerationError);
+    console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Current global prompt error state:", promptGenerationError);
   }; 
 
   const openComparisonModal = (originalUrl: string, enhancedUrl: string) => {
