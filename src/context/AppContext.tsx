@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { ImageFile, HistoryItem, EnhanceSettings, ScaleOption } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Helper function to convert File to base64 string (without data:image/... prefix)
+// Helper function to convert File to base64 string (without data:image/... prefix for upscale API)
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -23,6 +23,22 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
+// Helper function to convert File to full Data URL (for chat/completions API)
+const fileToDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+      } else {
+        reject(new Error('Failed to read file as a data URL.'));
+      }
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 interface AppContextType {
   images: ImageFile[];
   selectedImageId: string | null;
@@ -32,6 +48,8 @@ interface AppContextType {
   isSidebarOpen: boolean;
   isScanningModalOpen: boolean;
   scanningImageName: string;
+  isGeneratingPrompt: boolean; 
+  promptGenerationError: string | null; 
   
   // Actions
   addImages: (files: File[]) => void;
@@ -44,6 +62,7 @@ interface AppContextType {
   closeScanningModal: () => void;
   enhanceImages: () => Promise<void>;
   clearImages: () => void;
+  generatePromptFromImage: (imageFile: ImageFile) => Promise<void>; 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -63,6 +82,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScanningModalOpen, setIsScanningModalOpen] = useState(false);
   const [scanningImageName, setScanningImageName] = useState('');
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); 
+  const [promptGenerationError, setPromptGenerationError] = useState<string | null>(null); 
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('venice-history');
@@ -90,29 +111,45 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     
     setImages(prev => [...prev, ...newImages]);
     
-    if (!selectedImageId && newImages.length > 0) {
-      setSelectedImageId(newImages[0].id);
-    }
-    
     if (newImages.length > 0) {
+      const firstNewImageId = newImages[0].id;
+      if (!selectedImageId) {
+        setSelectedImageId(firstNewImageId);
+      }
+      
       setScanningImageName(newImages[0].file.name);
       setIsScanningModalOpen(true);
       
       setTimeout(() => {
         setImages(prev => 
           prev.map(img => 
-            img.id === newImages[0].id ? { ...img, status: 'scanning' as const } : img
+            img.id === firstNewImageId ? { ...img, status: 'scanning' as const } : img
           )
         );
         
-        setTimeout(() => {
-          setIsScanningModalOpen(false);
-          setImages(prev => 
+        setTimeout(async () => { 
+          setIsScanningModalOpen(false);            
+          
+          // Get the ImageFile object that we want to generate a prompt for.
+          // It should be in the `newImages` array created at the start of `addImages`.
+          const imageToProcessForPrompt = newImages.find(img => img.id === firstNewImageId);
+
+          // Update its status to 'idle'
+          setImages(prev =>                         
             prev.map(img => 
-              img.id === newImages[0].id ? { ...img, status: 'idle' as const } : img
+              img.id === firstNewImageId ? { ...img, status: 'idle' as const } : img
             )
           );
-        }, 2000);
+          
+          // Now, call generatePromptFromImage with the found image object.
+          if (imageToProcessForPrompt) {
+            console.log("addImages: Calling generatePromptFromImage for image ID:", imageToProcessForPrompt.id);
+            await generatePromptFromImage(imageToProcessForPrompt);
+          } else {
+            console.error("addImages: CRITICAL - Could not find image in newImages array. ID:", firstNewImageId);
+            setPromptGenerationError("Internal error: Failed to prepare image for prompt.");
+          }
+        }, 2000); 
       }, 500);
     }
   };
@@ -278,6 +315,109 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setSelectedImageId(null);
   };
 
+  const generatePromptFromImage = async (imageToAnalyze: ImageFile) => { 
+    console.log("[generatePromptFromImage] Called for image ID:", imageToAnalyze?.id);
+    const apiKey = import.meta.env.VITE_VENICE_API_KEY;
+    if (!apiKey) {
+      console.error("[generatePromptFromImage] Venice API key not found.");
+      setPromptGenerationError('Configuration error: API key missing.');
+      return;
+    }
+    console.log("[generatePromptFromImage] API key found.");
+
+    if (!imageToAnalyze || !imageToAnalyze.file) {
+      console.error("[generatePromptFromImage] Invalid image data passed. Image ID:", imageToAnalyze?.id, "File exists:", !!imageToAnalyze?.file);
+      setPromptGenerationError('Internal error: Invalid image data for prompt generation.');
+      return;
+    }
+    console.log("[generatePromptFromImage] Image data appears valid. File name:", imageToAnalyze.file.name);
+
+    setIsGeneratingPrompt(true);
+    setPromptGenerationError(null);
+    console.log("[generatePromptFromImage] State set for prompt generation. Attempting fileToDataURL for image ID:", imageToAnalyze.id);
+
+    try {
+      const imageDataUrl = await fileToDataURL(imageToAnalyze.file);
+      console.log("[generatePromptFromImage] fileToDataURL successful for image ID:", imageToAnalyze.id, "Data URL length:", imageDataUrl?.length);
+
+      const options = {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "qwen-2.5-vl",
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: "First give a short, concise title (3-5 words) for this image, then write a detailed prompt with which I can replicate this image with an AI image generator. Format your response exactly like this - Title: [title] Prompt: [detailed prompt]",
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: imageDataUrl, // Use the full Data URL here
+                  },
+                },
+              ],
+            },
+          ],
+          venice_parameters: {
+            include_venice_system_prompt: true,
+          },
+          temperature: 0.7,
+          max_tokens: 400,
+          stream: false,
+        }),
+      };
+
+      const response = await fetch(
+        "https://api.venice.ai/api/v1/chat/completions",
+        options
+      );
+      
+      console.log("[generatePromptFromImage] Fetch response status:", response.status, "for image ID:", imageToAnalyze.id);
+    
+      if (!response.ok) {
+        let errorMsg = `API Error: ${response.status}`;
+        try {
+            const errorData = await response.json();
+            errorMsg = errorData.message || errorData.detail || errorData.error || errorMsg;
+        } catch (e) {
+            errorMsg += ` - ${response.statusText}`;
+        }
+        throw new Error(errorMsg);
+      }
+
+      console.log("[generatePromptFromImage] API response OK for image ID:", imageToAnalyze.id);
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+
+      if (!content) {
+        console.error("[generatePromptFromImage] No content in API response for image ID:", imageToAnalyze.id);
+        throw new Error('No content in API response for prompt generation.');
+      }
+      console.log("[generatePromptFromImage] Content received from API for image ID:", imageToAnalyze.id);
+
+      const promptMatch = content.match(/Prompt:\s*(.*)/is);
+      
+      const description = promptMatch ? promptMatch[1].trim() : content.trim();
+
+      updateSettings({ prompt: description });
+      console.log("[generatePromptFromImage] Prompt updated in settings for image ID:", imageToAnalyze.id);
+
+    } catch (error) {
+      console.error("[generatePromptFromImage] Error during prompt generation for image ID:", imageToAnalyze?.id, error);
+      setPromptGenerationError(error instanceof Error ? error.message : 'Failed to generate prompt.');
+    }
+    setIsGeneratingPrompt(false);
+    console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Error state:", promptGenerationError);
+  }; 
+
   return (
     <AppContext.Provider
       value={{
@@ -289,6 +429,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isSidebarOpen,
         isScanningModalOpen,
         scanningImageName,
+        isGeneratingPrompt, 
+        promptGenerationError, 
         addImages,
         removeImage,
         selectImage,
@@ -299,6 +441,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         closeScanningModal,
         enhanceImages,
         clearImages,
+        generatePromptFromImage, 
       }}
     >
       {children}

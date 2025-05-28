@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Wand2, Info, X } from 'lucide-react';
+import { ChevronDown, Wand2, Info, X, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ScaleOption } from '../types';
 
@@ -12,7 +12,9 @@ const UpscaleOptions: React.FC = () => {
     updateSettings,
     enhanceImages,
     images,
-    selectedImageId
+    selectedImageId,
+    isGeneratingPrompt,
+    promptGenerationError
   } = useApp();
   
   const scaleOptions: { value: ScaleOption; label: string }[] = [
@@ -134,12 +136,20 @@ const UpscaleOptions: React.FC = () => {
             <div className="relative">
               <textarea
                 rows={4}
-                className="w-full p-2.5 pr-10 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:ring-venice-red focus:border-venice-red dark:bg-gray-800 dark:text-white sm:text-sm resize-none"
-                placeholder="A young blue-skinned boy with a peacock feather..."
+                className={`w-full p-2.5 pr-10 border rounded-md shadow-sm focus:ring-venice-red focus:border-venice-red dark:bg-gray-800 dark:text-white sm:text-sm resize-none ${
+                  isGeneratingPrompt ? 'bg-gray-100 dark:bg-gray-750 cursor-wait' : 'border-gray-300 dark:border-gray-700'
+                }`}
+                placeholder={isGeneratingPrompt ? "Analyzing image and generating prompt..." : "A young blue-skinned boy with a peacock feather..."}
                 value={settings.prompt || ''}
                 onChange={(e) => updateSettings({ prompt: e.target.value })}
+                disabled={isGeneratingPrompt}
               />
-              {settings.prompt && (
+              {isGeneratingPrompt && (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-850/70 rounded-md">
+                  <Loader2 size={24} className="animate-spin text-venice-red" />
+                </div>
+              )}
+              {!isGeneratingPrompt && settings.prompt && (
                 <button
                   type="button"
                   onClick={() => updateSettings({ prompt: '' })}
@@ -150,6 +160,11 @@ const UpscaleOptions: React.FC = () => {
                 </button>
               )}
             </div>
+            {promptGenerationError && (
+              <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                Error generating prompt: {promptGenerationError}
+              </p>
+            )}
           </div>
           {/* Prompt Input Section End */}
           
