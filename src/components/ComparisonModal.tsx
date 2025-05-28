@@ -1,20 +1,20 @@
 import React from 'react';
 import { X, Download, Share2 } from 'lucide-react';
+import { useApp } from '../context/AppContext';
 
 interface ComparisonModalProps {
   isOpen: boolean;
   onClose: () => void;
-  originalImage: string;
-  enhancedImage: string;
+  // originalImage and enhancedImage will be sourced from context via comparisonImages
 }
 
 const ComparisonModal: React.FC<ComparisonModalProps> = ({ 
   isOpen, 
-  onClose, 
-  originalImage, 
-  enhancedImage 
+  onClose 
 }) => {
-  if (!isOpen) return null;
+  const { comparisonImages } = useApp();
+  if (!isOpen || !comparisonImages) return null;
+  const { original: originalImage, enhanced: enhancedImage, operationType } = comparisonImages;
 
   const handleDownload = (imageUrl: string, filename: string) => {
     const link = document.createElement('a');
@@ -31,9 +31,9 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
         // Ensure the image URL is absolute or a data URL for sharing
         const absoluteEnhancedImageUrl = new URL(enhancedImage, window.location.origin).href;
         await navigator.share({
-          title: 'Enhanced Image',
-          text: 'Check out this image I enhanced!',
-          files: await urlToFiles(absoluteEnhancedImageUrl, 'enhanced-image.png', 'image/png')
+          title: `${operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} Image`, // Dynamic title
+          text: `Check out this image I ${operationType}!`, // Dynamic text
+          files: await urlToFiles(absoluteEnhancedImageUrl, `${operationType}-image.png`, 'image/png') // Dynamic filename
         });
       } catch (error) {
         console.error('Error sharing:', error);
@@ -96,12 +96,12 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
 
           {/* Enhanced Image Section */}
           <div className="flex flex-col items-center">
-            <h3 className="text-xl font-semibold mb-3 text-venice-olive-brown">Enhanced</h3>
+            <h3 className="text-xl font-semibold mb-3 text-venice-olive-brown">{operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}</h3>
             <div className="w-full aspect-[3/4] bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden shadow-lg mb-4">
-              <img src={enhancedImage} alt="Enhanced" className="w-full h-full object-contain" />
+              <img src={enhancedImage} alt={operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} className="w-full h-full object-contain" />
             </div>
             <button 
-              onClick={() => handleDownload(enhancedImage, 'enhanced_image.png')}
+              onClick={() => handleDownload(enhancedImage, `${operationType}_image.png`)}
               className="mt-2 py-2.5 px-5 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
               style={{
                 backgroundColor: '#ea463b', // venice-bright-red
@@ -109,7 +109,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
               }}
             >
               <Download size={18} className="mr-2" />
-              Download Enhanced
+              Download {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
             </button>
           </div>
         </div>
@@ -126,7 +126,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
             }}
           >
             <Share2 size={18} className="mr-2" />
-            Share Enhanced Image
+            Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} Image
           </button>
           { !navigator.share && <p className='text-xs text-venice-gray-medium mt-2'>Sharing not available in this browser.</p>}
         </div>

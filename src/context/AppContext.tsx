@@ -52,7 +52,7 @@ interface AppContextType {
   successNotification: string | null; 
   apiErrorNotification: string | null; 
   isComparisonModalOpen: boolean; 
-  comparisonImages: { original: string; enhanced: string } | null; 
+  comparisonImages: { original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null; 
   
   // Actions
   addImages: (files: File[]) => Promise<void>;
@@ -68,7 +68,7 @@ interface AppContextType {
   generatePromptFromImage: (imageFile: ImageFile) => Promise<void>; 
   setSuccessNotification: (message: string | null) => void; 
   setApiErrorNotification: (message: string | null) => void; 
-  openComparisonModal: (originalUrl: string, enhancedUrl: string) => void; 
+  openComparisonModal: (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => void; 
   closeComparisonModal: () => void; 
 }
 
@@ -93,7 +93,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [successNotification, setSuccessNotification] = useState<string | null>(null); 
   const [apiErrorNotification, setApiErrorNotification] = useState<string | null>(null); 
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false); 
-  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string } | null>(null); 
+  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null>(null); 
   
   useEffect(() => {
     const savedHistory = localStorage.getItem('venice-history');
@@ -386,6 +386,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         document.body.removeChild(link);
         // link.remove(); // Alternative for modern browsers
 
+        const operationType: 'enhanced' | 'upscaled' = settings.enhance ? 'enhanced' : 'upscaled';
         setImages(prev =>
           prev.map(img => {
             if (img.id === selectedImageId) {
@@ -398,6 +399,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
                 status: 'complete' as const,
                 enhanced: enhancedImageUrl,
                 error: undefined,
+                operationType,
               };
 
               const historyItem: HistoryItem = {
@@ -414,7 +416,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           })
         );
         setSuccessNotification('Image enhanced successfully!');
-        openComparisonModal(imageToProcess.preview, enhancedImageUrl); // Changed back from url to preview
+        openComparisonModal(imageToProcess.preview, enhancedImageUrl, operationType); // Pass operationType
       } else {
         let errorMessage = `API Error: ${response.status} ${response.statusText}`;
         try {
@@ -564,8 +566,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Current global prompt error state:", promptGenerationError);
   }; 
 
-  const openComparisonModal = (originalUrl: string, enhancedUrl: string) => {
-    setComparisonImages({ original: originalUrl, enhanced: enhancedUrl });
+  const openComparisonModal = (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => {
+    setComparisonImages({ original: originalUrl, enhanced: enhancedUrl, operationType });
     setIsComparisonModalOpen(true);
   };
 

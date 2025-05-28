@@ -8,6 +8,7 @@ export interface ImageFile {
   progress?: number; // Added for upload/enhancement progress tracking
   enhanced?: string; // Data URL for enhanced image
   error?: string;
+  operationType?: 'enhanced' | 'upscaled'; // To distinguish between enhance and upscale operations
 }
 
 export interface HistoryItem {
