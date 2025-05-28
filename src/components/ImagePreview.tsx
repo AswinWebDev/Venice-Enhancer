@@ -130,7 +130,7 @@ const ImagePreview: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-venice-cream-dark p-4 md:p-6 rounded-lg shadow-lg">
+    <div className="w-full bg-venice-cream-dark rounded-lg shadow-lg">
       {/* Main Image Display Area */}
       <div className="mb-6 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-xl relative aspect-video sm:aspect-[4/3] md:aspect-video lg:aspect-[16/9]">
         <img 
@@ -140,22 +140,16 @@ const ImagePreview: React.FC = () => {
         />
         {/* Actions for the main displayed image */}
         <div className="absolute top-2 right-2 flex flex-col space-y-2 z-10">
-          {canEnhanceDisplayed && (
-            <button 
-              onClick={enhanceImages} 
-              className="p-2 bg-venice-green-dark hover:bg-venice-green text-white rounded-full transition-colors shadow-md"
-              aria-label="Enhance Selected Image"
-              title="Enhance Image"
-            >
-              <RefreshCw size={20} />
-            </button>
-          )}
+         
           {canCompareDisplayed && imageToDisplay.enhanced && (
             <button 
               onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
               className="p-2 bg-venice-blue-dark hover:bg-venice-blue text-white rounded-full transition-colors shadow-md"
               aria-label="View & Compare Selected Image"
               title="View & Compare"
+              style={{
+                backgroundColor: '#00e600'
+              }}
             >
               <Eye size={20} />
             </button>
@@ -165,6 +159,9 @@ const ImagePreview: React.FC = () => {
             className="p-2 bg-venice-red-dark hover:bg-venice-red text-white rounded-full transition-colors shadow-md"
             aria-label="Remove Selected Image"
             title="Remove Image"
+            style={{
+              backgroundColor: '#ff0000'
+            }}
           >
             <Trash2 size={20} />
           </button>
