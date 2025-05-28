@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, Check } from 'lucide-react';
+import { Trash2, Check, AlertTriangle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import ScanningAnimation from './ScanningAnimation';
 
@@ -50,6 +50,14 @@ const ImagePreview: React.FC = () => {
               {image.status === 'complete' && (
                 <div className="absolute top-2 right-2 bg-venice-red text-white rounded-full p-1">
                   <Check size={16} />
+                </div>
+              )}
+              
+              {image.status === 'error' && (
+                <div className="absolute inset-0 bg-red-700 bg-opacity-80 flex flex-col items-center justify-center p-2 text-white text-center">
+                  <AlertTriangle size={24} className="mb-1" />
+                  <p className="text-xs font-medium">Error</p>
+                  {image.error && <p className="text-xxs mt-0.5 leading-tight">{image.error.length > 100 ? image.error.substring(0, 97) + '...' : image.error}</p>}
                 </div>
               )}
               

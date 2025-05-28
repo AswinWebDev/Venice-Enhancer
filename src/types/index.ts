@@ -5,6 +5,7 @@ export interface ImageFile {
   selected: boolean;
   status: 'idle' | 'scanning' | 'processing' | 'complete' | 'error';
   enhanced?: string;
+  error?: string;
 }
 
 export interface HistoryItem {
