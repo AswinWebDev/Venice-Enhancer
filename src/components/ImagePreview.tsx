@@ -1,200 +1,216 @@
 import React from 'react';
-import { Trash2, Check, AlertTriangle, Eye } from 'lucide-react'; // Added Eye for View & Compare
 import { useApp } from '../context/AppContext';
-import ScanningAnimation from './ScanningAnimation';
+import { ImageFile } from '../types';
+import { Trash2, Eye, RefreshCw, AlertTriangle, CheckCircle } from 'lucide-react';
+
+// Props for the individual image card in the grid
+interface ImageCardProps {
+  image: ImageFile;
+  isSelectedInGrid: boolean; 
+  onSelect: (id: string) => void;
+  onRemove: (id: string) => void;
+  onEnhanceSingleInGrid: (id: string) => void;
+}
+
+const ImageCard: React.FC<ImageCardProps> = ({ 
+  image, 
+  isSelectedInGrid, 
+  onSelect, 
+  onRemove, 
+  onEnhanceSingleInGrid 
+}) => {
+  const { openComparisonModal } = useApp();
+  const canEnhance = image.status === 'idle' || image.status === 'error' || image.status === 'complete';
+  const canCompare = image.status === 'complete' && image.enhanced;
+
+  return (
+    <div 
+      className={`relative group border-2 rounded-lg overflow-hidden shadow-lg transition-all duration-300 cursor-pointer 
+        ${isSelectedInGrid ? 'border-venice-red-dark ring-2 ring-venice-red-dark' : 'border-transparent hover:border-venice-red-light'}`}
+      onClick={() => onSelect(image.id)}
+      title={image.name}
+    >
+      <img 
+        src={image.preview} 
+        alt={image.name || 'Uploaded image'} 
+        className="w-full h-40 sm:h-44 md:h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+      />
+      {/* Overlay for status and actions */}
+      <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="flex space-x-2 mb-1">
+          {canEnhance && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onEnhanceSingleInGrid(image.id); }}
+              className="p-1.5 bg-black/60 hover:bg-venice-green-dark/80 rounded-full text-white transition-colors"
+              aria-label="Enhance Image"
+            >
+              <RefreshCw size={18} />
+            </button>
+          )}
+          {canCompare && image.enhanced && (
+            <button 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                openComparisonModal(image.preview, image.enhanced!); 
+              }}
+              className="p-1.5 bg-black/60 hover:bg-venice-blue-dark/80 rounded-full text-white transition-colors"
+              aria-label="View & Compare"
+            >
+              <Eye size={18} />
+            </button>
+          )}
+          <button 
+            onClick={(e) => { e.stopPropagation(); onRemove(image.id); }}
+            className="p-1.5 bg-black/60 hover:bg-venice-red-dark/80 rounded-full text-white transition-colors"
+            aria-label="Remove Image"
+          >
+            <Trash2 size={18} />
+          </button>
+        </div>
+        <p className="text-white text-xs truncate max-w-full px-1 mt-1">{image.name}</p>
+        {/* Status icons visible on hover */}
+        <div className='mt-1'>
+            {image.status === 'processing' && <RefreshCw size={18} className="animate-spin text-venice-blue-light" />}
+            {image.status === 'scanning' && <RefreshCw size={18} className="animate-spin text-venice-yellow-dark" />}
+            {image.status === 'complete' && <CheckCircle size={18} className="text-venice-green-dark" />}
+            {image.status === 'error' && <AlertTriangle size={18} className="text-venice-red-dark" />}
+        </div>
+      </div>
+      {/* Static status display when not hovering (for selected or specific states) */}
+      {!navigator.maxTouchPoints && (
+        <div className="absolute bottom-1 right-1 p-1 bg-black/40 rounded-full">
+          {image.status === 'processing' && <RefreshCw size={14} className="animate-spin text-venice-blue-light" />}
+          {image.status === 'scanning' && <RefreshCw size={14} className="animate-spin text-venice-yellow-dark" />}
+          {image.status === 'complete' && <CheckCircle size={14} className="text-venice-green-dark" />}
+          {image.status === 'error' && <AlertTriangle size={14} className="text-venice-red-dark" />}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const ImagePreview: React.FC = () => {
-  const { 
-    images, 
-    removeImage, 
-    selectImage, 
+  const {
+    images,
     selectedImageId,
-    // openComparisonModal // Assuming this will be added back to context later for ComparisonModal
+    removeImage,
+    selectImage,
+    enhanceImages, // General enhance for the currently selected image
+    openComparisonModal
   } = useApp();
 
   if (images.length === 0) return null;
 
-  // Determine if the selected image (if any) has an enhanced version for comparison
-  const selectedImg = images.find(img => img.id === selectedImageId);
-  const canCompareSelected = selectedImg?.status === 'complete' && selectedImg?.enhanced;
+  // Determine the image to display in the main preview area
+  // Prioritize selectedImageId, fallback to the first image if none selected or selected is invalid
+  let imageToDisplay = images.find(img => img.id === selectedImageId);
+  if (!imageToDisplay && images.length > 0) {
+    imageToDisplay = images[0];
+    // Optionally, select the first image if no valid selection exists
+    // This depends on desired UX, for now, we just display it without changing selectedImageId
+  }
+
+  if (!imageToDisplay) return null; // Should not happen if images.length > 0
+
+  const canEnhanceDisplayed = imageToDisplay.status === 'idle' || imageToDisplay.status === 'error' || imageToDisplay.status === 'complete';
+  const canCompareDisplayed = imageToDisplay.status === 'complete' && imageToDisplay.enhanced;
+
+  const handleEnhanceSingleImageInGrid = (id: string) => {
+    // If the image to enhance from grid is not the currently selected one for main display,
+    // select it first, then enhance.
+    if (selectedImageId !== id) {
+      selectImage(id);
+      // enhanceImages will use the new selectedImageId from context after state update
+      // Using a timeout can help ensure state is updated, though not always guaranteed.
+      // A more robust way would be to pass the image object directly to enhanceImages if context supports it.
+      setTimeout(() => enhanceImages(), 0); 
+    } else {
+      enhanceImages(); // Enhance the already selected image
+    }
+  };
 
   return (
-    <div className="w-full">
-      {/* Title changes based on single or multiple images */} 
-      <div className="flex justify-between items-center mb-3">
-        <h3 className="text-xl font-semibold text-venice-olive-brown">
-          {images.length === 1 ? 'Your Image' : `Uploaded Images (${images.length})`}
-        </h3>
-        {images.length === 1 && canCompareSelected && (
+    <div className="w-full bg-venice-cream-dark p-4 md:p-6 rounded-lg shadow-lg">
+      {/* Main Image Display Area */}
+      <div className="mb-6 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-xl relative aspect-video sm:aspect-[4/3] md:aspect-video lg:aspect-[16/9]">
+        <img 
+          src={imageToDisplay.enhanced || imageToDisplay.preview} 
+          alt={imageToDisplay.name || 'Selected image'} 
+          className="w-full h-full object-contain rounded-md"
+        />
+        {/* Actions for the main displayed image */}
+        <div className="absolute top-2 right-2 flex flex-col space-y-2 z-10">
+          {canEnhanceDisplayed && (
+            <button 
+              onClick={enhanceImages} 
+              className="p-2 bg-venice-green-dark/80 hover:bg-venice-green-dark rounded-full text-white transition-colors shadow-md"
+              aria-label="Enhance Selected Image"
+              title="Enhance Image"
+            >
+              <RefreshCw size={20} />
+            </button>
+          )}
+          {canCompareDisplayed && imageToDisplay.enhanced && (
+            <button 
+              onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
+              className="p-2 bg-venice-blue-dark/80 hover:bg-venice-blue-dark rounded-full text-white transition-colors shadow-md"
+              aria-label="View & Compare Selected Image"
+              title="View & Compare"
+            >
+              <Eye size={20} />
+            </button>
+          )}
           <button 
-            // onClick={() => openComparisonModal(selectedImg.preview, selectedImg.enhanced!)} // For when ComparisonModal is re-integrated
-            className="flex items-center px-3 py-1.5 text-sm bg-venice-stone hover:bg-venice-dark-olive text-white rounded-md transition-colors"
+            onClick={() => removeImage(imageToDisplay!.id)} 
+            className="p-2 bg-venice-red-dark/80 hover:bg-venice-red-dark rounded-full text-white transition-colors shadow-md"
+            aria-label="Remove Selected Image"
+            title="Remove Image"
           >
-            <Eye size={16} className="mr-1.5" /> View & Compare
+            <Trash2 size={20} />
           </button>
+        </div>
+        {/* Status indicator for main displayed image */}
+        <div className="absolute bottom-2 left-2 z-10">
+          {imageToDisplay.status === 'processing' && 
+            <div className='flex items-center bg-black/60 text-white text-xs px-2 py-1 rounded-full'>
+              <RefreshCw size={14} className="animate-spin mr-1.5" /> Processing...
+            </div>}
+          {imageToDisplay.status === 'scanning' && 
+            <div className='flex items-center bg-black/60 text-white text-xs px-2 py-1 rounded-full'>
+              <RefreshCw size={14} className="animate-spin mr-1.5" /> Analyzing...
+            </div>}
+          {imageToDisplay.status === 'complete' && 
+            <div className='flex items-center bg-black/60 text-venice-green-light text-xs px-2 py-1 rounded-full'>
+              <CheckCircle size={14} className="mr-1.5" /> Enhanced
+            </div>}
+          {imageToDisplay.status === 'error' && 
+            <div className='flex items-center bg-black/60 text-venice-red-light text-xs px-2 py-1 rounded-full' title={imageToDisplay.error}>
+              <AlertTriangle size={14} className="mr-1.5" /> Error
+            </div>}
+        </div>
+        {imageToDisplay.error && imageToDisplay.status === 'error' && (
+          <p className="absolute bottom-8 left-2 text-xs text-red-400 bg-gray-900/70 p-1 rounded max-w-[calc(100%-1rem)] truncate z-10">
+            {imageToDisplay.error}
+          </p>
         )}
       </div>
-      
-      {/* Single Image Display */} 
-      {images.length === 1 ? (
-        images.map((image) => {
-          const isSelected = true; // If only one image, it's always considered 'selected' for display purposes here
-          
-          return (
-            <div 
-              key={image.id}
-              className={`
-                relative w-full aspect-video rounded-lg overflow-hidden border-2 transition-all duration-200 cursor-pointer 
-                bg-white dark:bg-venice-charcoal
-                ${isSelected 
-                  ? 'border-venice-bright-red shadow-xl'
-                  : 'border-venice-stone hover:border-venice-dark-olive'}
-              `}
-              onClick={() => selectImage(image.id)} // Still allow selection for context consistency
-            >
-              <img 
-                src={image.enhanced || image.preview} 
-                alt={image.name || "Preview"} 
-                className="w-full h-full object-contain"
+
+      {/* Thumbnail Grid Area - only show if more than one image exists */}
+      {images.length > 1 && (
+        <div className="mb-2">
+          <h3 className="text-lg font-semibold mb-3 text-venice-olive-brown dark:text-venice-cream-dark">Uploaded Images</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {images.map(img => (
+              <ImageCard 
+                key={img.id} 
+                image={img} 
+                isSelectedInGrid={img.id === selectedImageId} // Pass if this card is the one selected in context
+                onSelect={selectImage} 
+                onRemove={removeImage} 
+                onEnhanceSingleInGrid={handleEnhanceSingleImageInGrid}
               />
-              
-              {image.status === 'scanning' && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
-                  <ScanningAnimation />
-                  <p className='mt-2 text-sm'>Analyzing...</p>
-                </div>
-              )}
-              
-              {image.status === 'processing' && (
-                <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
-                  <div className="w-10 h-10 border-4 border-venice-bright-red border-t-transparent rounded-full animate-spin"></div>
-                  <p className='mt-2 text-sm'>Enhancing...</p>
-                </div>
-              )}
-              
-              {image.status === 'complete' && !image.enhanced && (
-                 <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full p-1.5">
-                    <Check size={18} />
-                  </div>
-              )}
-
-              {image.status === 'complete' && image.enhanced && (
-                 <div className="absolute top-2 right-2 bg-venice-coral text-white rounded-full p-1.5">
-                    <Check size={18} />
-                  </div>
-              )}
-              
-              {image.status === 'error' && (
-                <div className="absolute inset-0 bg-red-700/80 flex flex-col items-center justify-center p-3 text-white text-center">
-                  <AlertTriangle size={28} className="mb-1.5" />
-                  <p className="text-sm font-semibold">Enhancement Error</p>
-                  {image.error && <p className="text-xs mt-1 leading-tight line-clamp-3">{image.error}</p>}
-                </div>
-              )}
-              
-              {/* Remove button appears on hover for the single image view */} 
-              <div className="absolute top-2 left-2 opacity-0 hover:opacity-100 focus-within:opacity-100 transition-opacity group">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeImage(image.id);
-                  }}
-                  className="p-2 bg-black/50 hover:bg-red-600/80 rounded-full text-white transition-colors"
-                  aria-label="Remove image"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-
-              {/* No need for the bottom selection bar if it's the only image and always 'selected' visually */}
-            </div>
-          );
-        })
-      ) : (
-        // Multiple Images Display (Grid) - existing logic with minor style updates
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
-          {images.map((image) => {
-            const isSelected = image.id === selectedImageId;
-            const canCompare = image.status === 'complete' && image.enhanced;
-            
-            return (
-              <div 
-                key={image.id}
-                className={`
-                  relative aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 group cursor-pointer
-                  bg-venice-beige/30 dark:bg-venice-deep-olive/30
-                  ${isSelected 
-                    ? 'border-venice-bright-red shadow-lg'
-                    : 'border-venice-stone hover:border-venice-dark-olive'}
-                `}
-                onClick={() => selectImage(image.id)}
-              >
-                <img 
-                  src={image.preview} // Always show preview in grid, enhanced shown in modal/large view
-                  alt={image.name || "Preview"} 
-                  className="w-full h-full object-cover"
-                />
-                
-                {image.status === 'scanning' && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <ScanningAnimation />
-                  </div>
-                )}
-                
-                {image.status === 'processing' && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-venice-bright-red border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-                
-                {image.status === 'complete' && image.enhanced && (
-                  <div className="absolute top-1.5 right-1.5 bg-venice-coral text-white rounded-full p-1">
-                    <Check size={14} />
-                  </div>
-                )}
-
-                {image.status === 'complete' && !image.enhanced && (
-                  <div className="absolute top-1.5 right-1.5 bg-green-500 text-white rounded-full p-1">
-                    <Check size={14} />
-                  </div>
-                )}
-                
-                {image.status === 'error' && (
-                  <div className="absolute inset-0 bg-red-700/80 flex flex-col items-center justify-center p-2 text-white text-center">
-                    <AlertTriangle size={20} className="mb-0.5" />
-                    <p className="text-xs font-medium">Error</p>
-                  </div>
-                )}
-                
-                {/* Action buttons on hover */} 
-                <div className="absolute top-1.5 left-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1.5">
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeImage(image.id);
-                    }}
-                    className="p-1.5 bg-black/50 hover:bg-red-600/70 rounded-full text-white transition-colors"
-                    aria-label="Remove image"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                  {canCompare && (
-                    <button 
-                      // onClick={(e) => { e.stopPropagation(); openComparisonModal(image.preview, image.enhanced!); }} // For when ComparisonModal is re-integrated
-                      className="p-1.5 bg-black/50 hover:bg-blue-600/70 rounded-full text-white transition-colors"
-                      aria-label="View & Compare"
-                    >
-                      <Eye size={12} />
-                    </button>
-                  )}
-                </div>
-                
-                {isSelected && (
-                  <div className="absolute bottom-0 inset-x-0 h-1 bg-venice-bright-red"></div>
-                )}
-              </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
       )}
     </div>

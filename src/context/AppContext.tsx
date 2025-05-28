@@ -52,6 +52,8 @@ interface AppContextType {
   promptGenerationError: string | null; 
   successNotification: string | null; 
   apiErrorNotification: string | null; 
+  isComparisonModalOpen: boolean; 
+  comparisonImages: { original: string; enhanced: string } | null; 
   
   // Actions
   addImages: (files: File[]) => void;
@@ -67,6 +69,8 @@ interface AppContextType {
   generatePromptFromImage: (imageFile: ImageFile) => Promise<void>; 
   setSuccessNotification: (message: string | null) => void; 
   setApiErrorNotification: (message: string | null) => void; 
+  openComparisonModal: (originalUrl: string, enhancedUrl: string) => void; 
+  closeComparisonModal: () => void; 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -90,7 +94,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [promptGenerationError, setPromptGenerationError] = useState<string | null>(null); 
   const [successNotification, setSuccessNotification] = useState<string | null>(null); 
   const [apiErrorNotification, setApiErrorNotification] = useState<string | null>(null); 
-
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false); 
+  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string } | null>(null); 
+  
   useEffect(() => {
     const savedHistory = localStorage.getItem('venice-history');
     if (savedHistory) {
@@ -277,6 +283,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         const imageBlob = await response.blob();
         const enhancedImageUrl = URL.createObjectURL(imageBlob);
 
+        // Auto-download the enhanced image
+        const link = document.createElement('a');
+        link.href = enhancedImageUrl;
+        // Try to get a reasonable filename
+        const originalFilename = imageToProcess.file.name.split('.').slice(0, -1).join('.');
+        const fileExtension = imageToProcess.file.name.split('.').pop() || 'png';
+        link.download = `${originalFilename}_enhanced.${fileExtension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // link.remove(); // Alternative for modern browsers
+
         setImages(prev =>
           prev.map(img => {
             if (img.id === selectedImageId) {
@@ -305,6 +323,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           })
         );
         setSuccessNotification('Image enhanced successfully!');
+        openComparisonModal(imageToProcess.preview, enhancedImageUrl);
       } else {
         let errorMessage = `API Error: ${response.status} ${response.statusText}`;
         try {
@@ -453,6 +472,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Error state:", promptGenerationError);
   }; 
 
+  const openComparisonModal = (originalUrl: string, enhancedUrl: string) => {
+    setComparisonImages({ original: originalUrl, enhanced: enhancedUrl });
+    setIsComparisonModalOpen(true);
+  };
+
+  const closeComparisonModal = () => {
+    setIsComparisonModalOpen(false);
+    setComparisonImages(null);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -468,6 +497,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         promptGenerationError, 
         successNotification, 
         apiErrorNotification, 
+        isComparisonModalOpen, 
+        comparisonImages, 
         setSuccessNotification, 
         setApiErrorNotification, 
         addImages,
@@ -481,6 +512,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         enhanceImages,
         clearImages,
         generatePromptFromImage, 
+        openComparisonModal, 
+        closeComparisonModal 
       }}
     >
       {children}

@@ -6,7 +6,7 @@ import UpscaleOptions from './components/UpscaleOptions';
 import ScanningModal from './components/ScanningModal';
 import SuccessNotification from './components/SuccessNotification';
 import ErrorNotification from './components/ErrorNotification';
-// import ComparisonModal from './components/ComparisonModal'; // Temporarily commented out
+import ComparisonModal from './components/ComparisonModal';
 
 function AppContent() {
   const { 
@@ -17,10 +17,10 @@ function AppContent() {
     successNotification, 
     setSuccessNotification, 
     apiErrorNotification, 
-    setApiErrorNotification
-    // isComparisonModalOpen, // Temporarily commented out
-    // closeComparisonModal,  // Temporarily commented out
-    // comparisonImages       // Temporarily commented out
+    setApiErrorNotification,
+    isComparisonModalOpen,
+    closeComparisonModal,
+    comparisonImages
   } = useApp();
   
   return (
@@ -61,14 +61,14 @@ function AppContent() {
         imageName={scanningImageName}
       /> */}
 
-      {/* {isComparisonModalOpen && comparisonImages && ( // Temporarily commented out
+      {isComparisonModalOpen && comparisonImages && (
         <ComparisonModal 
           isOpen={isComparisonModalOpen} 
           onClose={closeComparisonModal} 
           originalImage={comparisonImages.original} 
           enhancedImage={comparisonImages.enhanced} 
         />
-      )} */}
+      )}
 
       {successNotification && (
         <SuccessNotification 
