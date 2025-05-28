@@ -81,8 +81,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [settings, setSettings] = useState<EnhanceSettings>({
     scale: '2x',
     enhance: true,
-    creativity: 0.5,
-    adherence: 0.5,
+    creativity: 0.35, // Default updated
+    adherence: 0.35,  // Default updated
     prompt: "",
   });
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
@@ -284,7 +284,19 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateSettings = (newSettings: Partial<EnhanceSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    setSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      // If enhance is being turned off, set creativity to 0
+      if (newSettings.enhance === false) {
+        updated.creativity = 0;
+      }
+      // If enhance is being turned on and creativity was 0 (likely due to enhance being off previously),
+      // reset creativity to default.
+      if (newSettings.enhance === true && prev.enhance === false && updated.creativity === 0) {
+        updated.creativity = 0.35; // Reset to default when re-enabling enhance
+      }
+      return updated;
+    });
   };
 
   const setScale = (scale: ScaleOption) => {

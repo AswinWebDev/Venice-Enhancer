@@ -53,7 +53,10 @@ const UpscaleOptions: React.FC = () => {
                   id="enhance-toggle"
                   className="sr-only peer" 
                   checked={settings.enhance}
-                  onChange={(e) => updateSettings({ enhance: e.target.checked })}
+                  onChange={(e) => {
+                    const isEnhanceEnabled = e.target.checked;
+                    updateSettings({ enhance: isEnhanceEnabled });
+                  }}
                 />
                 <div className="w-11 h-6 bg-venice-beige peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-venice-red/50 rounded-full peer dark:bg-venice-stone/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-venice-bright-red"></div>
               </label>
@@ -166,15 +169,16 @@ const UpscaleOptions: React.FC = () => {
                     </div>
                   </label>
                   <span className="text-sm text-venice-olive-brown dark:text-venice-stone/80">
-                    {settings.creativity.toFixed(1)}
+                    {settings.creativity.toFixed(2)} {/* Show two decimal places for 0.05 step */}
                   </span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="1"
-                  step="0.1"
-                  value={settings.creativity}
+                  step="0.05" // Step updated
+                  value={settings.creativity} // Value is managed by AppContext
+                  disabled={!settings.enhance || isGeneratingPrompt} // Disabled when enhance is off or generating prompt
                   onChange={(e) => updateSettings({ creativity: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red dark:bg-venice-stone/50"
                 />
@@ -195,15 +199,16 @@ const UpscaleOptions: React.FC = () => {
                     </div>
                   </label>
                   <span className="text-sm text-venice-olive-brown dark:text-venice-stone/80">
-                    {settings.adherence.toFixed(1)}
+                    {settings.adherence.toFixed(2)} {/* Show two decimal places for 0.05 step */}
                   </span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="1"
-                  step="0.1"
+                  step="0.05" // Step updated
                   value={settings.adherence}
+                  disabled={isGeneratingPrompt} // Adherence only disabled during prompt generation
                   onChange={(e) => updateSettings({ adherence: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red dark:bg-venice-stone/50"
                 />
@@ -223,8 +228,13 @@ const UpscaleOptions: React.FC = () => {
             <button
               type="button"
               onClick={() => { 
-                updateSettings({ prompt: '', creativity: 0.5, adherence: 0.5, scale: '2x', enhance: true });
-                // Optionally clear history too, or make a separate button
+                updateSettings({ 
+                  prompt: '', 
+                  creativity: 0.35, // Default updated
+                  adherence: 0.35,  // Default updated
+                  scale: '2x', 
+                  enhance: true 
+                });
               }}
               className="w-full py-2.5 px-4 rounded-lg text-sm text-venice-olive-brown dark:text-venice-stone hover:bg-venice-beige/70 dark:hover:bg-venice-deep-olive/40 border border-venice-stone/50 transition-colors"
             >
