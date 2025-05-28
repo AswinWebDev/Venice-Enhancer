@@ -75,29 +75,45 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/70 dark:bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-venice-cream dark:bg-venice-charcoal-dark p-4 py-6 sm:p-6 md:p-8 rounded-lg sm:rounded-xl shadow-xl w-full max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto relative border border-venice-gray-light dark:border-venice-charcoal-medium transition-all duration-300 ease-out">
+      <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl shadow-xl w-full max-w-3xl lg:max-w-4xl max-h-[90vh] aspect-square overflow-hidden relative transition-all duration-300 ease-out">
+        {/* Full-modal Interactive Image Comparison Slider */}
+        <div className="absolute inset-0 w-full h-full z-0">
+          <ReactCompareSlider
+            itemOne={<ReactCompareSliderImage src={originalImage} alt="Original Image" style={{ objectFit: 'cover', width: '100%', height: '100%' }} />}
+            itemTwo={<ReactCompareSliderImage src={enhancedImage} alt={operationType === 'upscaled' ? 'Upscaled Image' : 'Enhanced Image'} style={{ objectFit: 'cover', width: '100%', height: '100%' }} />}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
+
+        {/* Overlaid Close Button */}
         <button 
           onClick={onClose} 
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-venice-gray-dark dark:text-venice-gray-light hover:text-venice-red-dark dark:hover:text-venice-red-light p-2 bg-transparent hover:bg-venice-red/10 dark:hover:bg-venice-red-dark/20 rounded-full transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-venice-red-light focus:ring-opacity-50 z-10"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-white p-2 bg-black/40 hover:bg-black/60 rounded-full transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-white/70 z-20"
           aria-label="Close modal"
         >
           <X size={28} />
         </button>
 
-        <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-venice-charcoal dark:text-venice-cream-dark">Compare Images</h2>
+        {/* Overlaid Title */}
+        <h2 className="absolute top-4 left-1/2 -translate-x-1/2 text-xl sm:text-2xl font-bold text-white p-2 bg-black/40 rounded-md z-20">Compare Images</h2>
         
-        {/* Interactive Image Comparison Slider */}
-        <div className="w-full max-w-md mx-auto aspect-square relative rounded-md shadow-lg mb-3 sm:mb-5 overflow-hidden">
-          <ReactCompareSlider
-            itemOne={<ReactCompareSliderImage src={originalImage} alt="Original Image" />}
-            itemTwo={<ReactCompareSliderImage src={enhancedImage} alt={operationType === 'upscaled' ? 'Upscaled Image' : 'Enhanced Image'} />}
-            style={{ width: '100%', height: '100%' }}
-          />
+        {/* Overlaid Original Badge */}
+        <div 
+          className="absolute top-16 left-4 px-2 py-1 rounded text-xs font-semibold bg-black/50 text-white z-10"
+        >
+          Original
+        </div>
+        
+        {/* Overlaid Enhanced/Upscaled Badge */}
+        <div 
+          className="absolute top-16 right-4 px-2 py-1 rounded text-xs font-semibold bg-black/50 text-white z-10"
+        >
+          {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
         </div>
 
-        {/* Action Buttons & Share Info */}
-        <div className="flex flex-col items-center w-full mt-4">
-          <div className="flex flex-row justify-center space-x-3 w-full">
+        {/* Overlaid Action Buttons & Share Info */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center w-full max-w-xs sm:max-w-md z-20">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 w-full items-center justify-center p-2 bg-black/30 rounded-md">
             <button 
               onClick={() => handleDownload(originalImage, 'original_image.png')}
               style={{
@@ -111,7 +127,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
               }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = veniceColors.stoneDark)}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = veniceColors.stone)}
-              className="transition-colors duration-150 flex items-center justify-center"
+              className="transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
             >
               <Download size={16} className="mr-2" />
               Download Original
@@ -129,7 +145,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
               }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = veniceColors.redDark)}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = veniceColors.red)}
-              className="transition-colors duration-150 flex items-center justify-center"
+              className="transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
             >
               <Download size={16} className="mr-2" />
               Download {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
@@ -150,7 +166,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
               onMouseEnter={(e) => { if (navigator.share) e.currentTarget.style.backgroundColor = veniceColors.blueDark; }}
               onMouseLeave={(e) => { if (navigator.share) e.currentTarget.style.backgroundColor = veniceColors.blue; }}
               disabled={!navigator.share}
-              className="transition-colors duration-150 flex items-center justify-center"
+              className="transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
             >
               <Share2 size={16} className="mr-2" />
               Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
@@ -158,8 +174,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
           </div>
           { !navigator.share && 
             <p 
-              className='text-xs mt-3 text-center'
-              style={{ color: '#757575' /* venice-gray. Consider dark mode styling if needed */ }}
+              className='text-xs mt-2 text-center text-white/80 bg-black/30 px-2 py-1 rounded-md w-full'
             >
               Sharing not available in this browser.
             </p>
