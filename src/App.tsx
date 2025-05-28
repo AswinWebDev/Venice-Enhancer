@@ -5,9 +5,20 @@ import ImagePreview from './components/ImagePreview';
 import UpscaleOptions from './components/UpscaleOptions';
 import ScanningModal from './components/ScanningModal';
 import MobileTopBar from './components/MobileTopBar';
+import SuccessNotification from './components/SuccessNotification';
+import ErrorNotification from './components/ErrorNotification';
 
 function AppContent() {
-  const { isScanningModalOpen, closeScanningModal, scanningImageName, images } = useApp();
+  const { 
+    isScanningModalOpen, 
+    closeScanningModal, 
+    scanningImageName, 
+    images, 
+    successNotification, 
+    setSuccessNotification, 
+    apiErrorNotification, 
+    setApiErrorNotification 
+  } = useApp();
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -58,6 +69,22 @@ function AppContent() {
         onClose={closeScanningModal}
         imageName={scanningImageName}
       />
+
+      {/* Success Notification */}
+      {successNotification && (
+        <SuccessNotification 
+          message={successNotification} 
+          onClose={() => setSuccessNotification(null)} 
+        />
+      )}
+
+      {/* Error Notification */}
+      {apiErrorNotification && (
+        <ErrorNotification 
+          message={apiErrorNotification} 
+          onClose={() => setApiErrorNotification(null)} 
+        />
+      )}
     </div>
   );
 }

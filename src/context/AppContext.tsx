@@ -50,6 +50,8 @@ interface AppContextType {
   scanningImageName: string;
   isGeneratingPrompt: boolean; 
   promptGenerationError: string | null; 
+  successNotification: string | null; 
+  apiErrorNotification: string | null; 
   
   // Actions
   addImages: (files: File[]) => void;
@@ -63,6 +65,8 @@ interface AppContextType {
   enhanceImages: () => Promise<void>;
   clearImages: () => void;
   generatePromptFromImage: (imageFile: ImageFile) => Promise<void>; 
+  setSuccessNotification: (message: string | null) => void; 
+  setApiErrorNotification: (message: string | null) => void; 
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -84,6 +88,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [scanningImageName, setScanningImageName] = useState('');
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); 
   const [promptGenerationError, setPromptGenerationError] = useState<string | null>(null); 
+  const [successNotification, setSuccessNotification] = useState<string | null>(null); 
+  const [apiErrorNotification, setApiErrorNotification] = useState<string | null>(null); 
 
   useEffect(() => {
     const savedHistory = localStorage.getItem('venice-history');
@@ -99,6 +105,26 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('venice-history', JSON.stringify(history));
   }, [history]);
+
+  // Auto-dismiss success notification
+  useEffect(() => {
+    if (successNotification) {
+      const timer = setTimeout(() => {
+        setSuccessNotification(null);
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successNotification]);
+
+  // Auto-dismiss API error notification
+  useEffect(() => {
+    if (apiErrorNotification) {
+      const timer = setTimeout(() => {
+        setApiErrorNotification(null);
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [apiErrorNotification]);
 
   const addImages = (files: File[]) => {
     const newImages = files.map(file => ({
@@ -202,17 +228,20 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           img.id === selectedImageId ? { ...img, status: 'error' as const, error: 'Configuration error: API key missing.' } : img
         )
       );
+      setApiErrorNotification('Configuration error: API key missing.');
       return;
     }
 
     if (!selectedImageId) {
       console.warn('enhanceImages called without a selected image.');
+      setApiErrorNotification('No image selected for enhancement.');
       return;
     }
 
     const imageToProcess = images.find(img => img.id === selectedImageId);
     if (!imageToProcess) {
       console.warn(`Selected image with id ${selectedImageId} not found.`);
+      setApiErrorNotification('Selected image not found.');
       return;
     }
 
@@ -275,6 +304,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             return img;
           })
         );
+        setSuccessNotification('Image enhanced successfully!');
       } else {
         let errorMessage = `API Error: ${response.status} ${response.statusText}`;
         try {
@@ -291,6 +321,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
             img.id === selectedImageId ? { ...img, status: 'error' as const, error: errorMessage } : img
           )
         );
+        setApiErrorNotification(errorMessage);
       }
     } catch (error) {
       console.error('Failed to enhance image:', error);
@@ -303,6 +334,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           img.id === selectedImageId ? { ...img, status: 'error' as const, error: errorMessage } : img
         )
       );
+      setApiErrorNotification(errorMessage);
     }
   };
   
@@ -321,6 +353,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!apiKey) {
       console.error("[generatePromptFromImage] Venice API key not found.");
       setPromptGenerationError('Configuration error: API key missing.');
+      setApiErrorNotification('Configuration error: API key missing.');
       return;
     }
     console.log("[generatePromptFromImage] API key found.");
@@ -328,6 +361,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (!imageToAnalyze || !imageToAnalyze.file) {
       console.error("[generatePromptFromImage] Invalid image data passed. Image ID:", imageToAnalyze?.id, "File exists:", !!imageToAnalyze?.file);
       setPromptGenerationError('Internal error: Invalid image data for prompt generation.');
+      setApiErrorNotification('Internal error: Invalid image data for prompt generation.');
       return;
     }
     console.log("[generatePromptFromImage] Image data appears valid. File name:", imageToAnalyze.file.name);
@@ -413,6 +447,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("[generatePromptFromImage] Error during prompt generation for image ID:", imageToAnalyze?.id, error);
       setPromptGenerationError(error instanceof Error ? error.message : 'Failed to generate prompt.');
+      setApiErrorNotification(error instanceof Error ? error.message : 'Failed to generate prompt.');
     }
     setIsGeneratingPrompt(false);
     console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Error state:", promptGenerationError);
@@ -431,6 +466,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         scanningImageName,
         isGeneratingPrompt, 
         promptGenerationError, 
+        successNotification, 
+        apiErrorNotification, 
+        setSuccessNotification, 
+        setApiErrorNotification, 
         addImages,
         removeImage,
         selectImage,
