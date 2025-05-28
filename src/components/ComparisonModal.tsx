@@ -120,7 +120,8 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
             <button 
               onClick={handleShare}
               disabled={!navigator.share}
-              className={`bg-venice-blue text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto ${navigator.share ? 'hover:bg-venice-blue-dark cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+              className={`text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto ${navigator.share ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+              style={{ backgroundColor: '#007bff', color: '#ffffff' }}
             >
               <Share2 size={16} className="mr-2" />
               Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
