@@ -83,7 +83,11 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
             </div>
             <button 
               onClick={() => handleDownload(originalImage, 'original_image.png')}
-              className="mt-2 bg-venice-stone text-white py-2.5 px-5 rounded-lg hover:bg-venice-dark-olive transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="mt-2 py-2.5 px-5 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
+              style={{
+                backgroundColor: '#b1a993', // venice-stone
+                color: '#ffffff'
+              }}
             >
               <Download size={18} className="mr-2" />
               Download Original
@@ -98,7 +102,11 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
             </div>
             <button 
               onClick={() => handleDownload(enhancedImage, 'enhanced_image.png')}
-              className="mt-2 bg-venice-red-dark text-white py-2.5 px-5 rounded-lg hover:bg-venice-red transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="mt-2 py-2.5 px-5 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
+              style={{
+                backgroundColor: '#ea463b', // venice-bright-red
+                color: '#ffffff'
+              }}
             >
               <Download size={18} className="mr-2" />
               Download Enhanced
@@ -110,8 +118,12 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
         <div className="mt-6 sm:mt-8 pt-6 border-t border-venice-olive-brown/20 text-center">
           <button 
             onClick={handleShare}
-            className="bg-venice-blue-dark text-white py-2.5 px-6 rounded-lg hover:bg-venice-blue transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+            className="py-2.5 px-6 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={!navigator.share} 
+            style={{
+              backgroundColor: '#5c5330', // venice-dark-olive
+              color: '#ffffff'
+            }}
           >
             <Share2 size={18} className="mr-2" />
             Share Enhanced Image

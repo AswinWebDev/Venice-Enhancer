@@ -144,11 +144,12 @@ const ImagePreview: React.FC = () => {
           {canCompareDisplayed && imageToDisplay.enhanced && (
             <button 
               onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
-              className="p-2 bg-venice-blue-dark hover:bg-venice-blue text-white rounded-full transition-colors shadow-md"
+              className="p-2 rounded-full transition-colors shadow-md"
               aria-label="View & Compare Selected Image"
               title="View & Compare"
               style={{
-                backgroundColor: '#00e600'
+                backgroundColor: '#5a4d14',
+                color: '#ffffff'
               }}
             >
               <Eye size={20} />
@@ -156,11 +157,12 @@ const ImagePreview: React.FC = () => {
           )}
           <button 
             onClick={() => removeImage(imageToDisplay!.id)} 
-            className="p-2 bg-venice-red-dark hover:bg-venice-red text-white rounded-full transition-colors shadow-md"
+            className="p-2 rounded-full transition-colors shadow-md"
             aria-label="Remove Selected Image"
             title="Remove Image"
             style={{
-              backgroundColor: '#ff0000'
+              backgroundColor: '#ff0000',
+              color: '#ffffff'
             }}
           >
             <Trash2 size={20} />
