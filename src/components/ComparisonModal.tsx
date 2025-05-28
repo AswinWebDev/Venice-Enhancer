@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Download, Share2 } from 'lucide-react';
+import { ReactCompareSlider, ReactCompareSliderImage } from 'react-compare-slider';
 import { useApp } from '../context/AppContext';
 
 interface ComparisonModalProps {
@@ -85,34 +86,13 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
 
         <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-venice-charcoal dark:text-venice-cream-dark">Compare Images</h2>
         
-        {/* Diagonal Split Image Viewer */}
-        <div className="w-full max-w-md mx-auto aspect-square relative overflow-hidden rounded-md shadow-lg mb-3 sm:mb-5" style={{ backgroundColor: '#e0e0e0' /* Fallback background */}}>
-          {/* Base Image (Enhanced/Upscaled) */}
-          <img 
-            src={enhancedImage} 
-            alt={operationType === 'upscaled' ? 'Upscaled Version' : 'Enhanced Version'} 
-            className="absolute inset-0 w-full h-full object-contain"
+        {/* Interactive Image Comparison Slider */}
+        <div className="w-full max-w-md mx-auto aspect-square relative rounded-md shadow-lg mb-3 sm:mb-5 overflow-hidden">
+          <ReactCompareSlider
+            itemOne={<ReactCompareSliderImage src={originalImage} alt="Original Image" />}
+            itemTwo={<ReactCompareSliderImage src={enhancedImage} alt={operationType === 'upscaled' ? 'Upscaled Image' : 'Enhanced Image'} />}
+            style={{ width: '100%', height: '100%' }}
           />
-          {/* Overlay Image (Original - Clipped) */}
-          <img 
-            src={originalImage} 
-            alt="Original Version (Clipped)" 
-            className="absolute inset-0 w-full h-full object-contain"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-          />
-          {/* Labels */}
-          <div 
-            className="absolute top-2 left-2 px-2 py-1 rounded text-xs sm:text-sm font-semibold"
-            style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
-          >
-            Original
-          </div>
-          <div 
-            className="absolute bottom-2 right-2 px-2 py-1 rounded text-xs sm:text-sm font-semibold"
-            style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: veniceColors.white }}
-          >
-            {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
-          </div>
         </div>
 
         {/* Action Buttons & Share Info */}
