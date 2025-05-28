@@ -84,7 +84,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
         </button>
 
         {/* Overlaid Title */}
-        <h2 className="absolute top-4 left-1/2 -translate-x-1/2 text-xl sm:text-2xl font-bold text-white p-2 bg-black/40 rounded-md z-20">Compare Images</h2>
+        <h2 className="hidden sm:block absolute top-4 left-1/2 -translate-x-1/2 text-xl sm:text-2xl font-bold text-white p-2 bg-black/40 rounded-md z-20">Compare Images</h2>
         
         {/* Overlaid Original Badge */}
         <div 
@@ -120,7 +120,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
             <button 
               onClick={handleShare}
               disabled={!navigator.share}
-              className={`bg-blue-500 text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto ${navigator.share ? 'hover:bg-blue-700 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+              className={`bg-venice-blue text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto ${navigator.share ? 'hover:bg-venice-blue-dark cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
             >
               <Share2 size={16} className="mr-2" />
               Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
