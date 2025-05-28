@@ -4,7 +4,7 @@ import VeniceLogoBlack from '../assets/venice-keys-black.png';
 const Header: React.FC = () => {
   return (
     <header className="w-full bg-venice-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl xl:max-w-screen-2xl mx-auto px-4 md:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <img src={VeniceLogoBlack} alt="Venice AI Logo" className="h-8 w-auto mr-3" />

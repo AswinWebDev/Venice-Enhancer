@@ -3,16 +3,12 @@ import Header from './components/Header';
 import UploadArea from './components/UploadArea';
 import ImagePreview from './components/ImagePreview';
 import UpscaleOptions from './components/UpscaleOptions';
-import ScanningModal from './components/ScanningModal';
-import SuccessNotification from './components/SuccessNotification';
+import SuccessNotification from './components/SuccessNotification.tsx';
 import ErrorNotification from './components/ErrorNotification';
-import ComparisonModal from './components/ComparisonModal';
+import ComparisonModal from './components/ComparisonModal.tsx';
 
 function AppContent() {
   const { 
-    isScanningModalOpen, 
-    closeScanningModal, 
-    scanningImageName, 
     images, 
     successNotification, 
     setSuccessNotification, 
@@ -28,7 +24,7 @@ function AppContent() {
       <Header />
       
       <main className="flex-grow w-full pt-4 pb-8">
-        <div className="px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="px-4 md:px-8 max-w-7xl xl:max-w-screen-2xl mx-auto">
           {images.length === 0 && (
             <div className="my-12 text-center">
               <h1 className="text-4xl font-bold mb-4 text-venice-deep-olive">Enhance Your Images</h1>
