@@ -79,9 +79,7 @@ const UpscaleOptions: React.FC = () => {
                 <div className="relative">
                   <textarea
                     rows={3}
-                    className={`w-full p-3 pr-10 border rounded-md shadow-sm focus:ring-venice-bright-red focus:border-venice-bright-red sm:text-sm resize-none dark:text-white
-                      ${isGeneratingPrompt ? 'bg-venice-beige/50 dark:bg-venice-deep-olive/30 cursor-wait' : 'border-venice-stone/70 bg-white dark:bg-venice-deep-olive/20 dark:border-venice-stone/50'}
-                    `}
+                    className={`block w-full p-3 text-sm rounded-lg text-venice-deep-olive dark:text-venice-cream border border-venice-stone/60 dark:border-venice-charcoal-dark focus:outline-none focus:border-venice-stone/60 dark:focus:border-venice-charcoal-dark placeholder-venice-stone dark:placeholder-venice-stone/70 focus:ring-2 focus:ring-venice-red/50 dark:focus:ring-venice-red/60 duration-150 ease-in-out ${isGeneratingPrompt ? 'bg-venice-beige/50 dark:bg-venice-deep-olive/30 cursor-wait' : 'bg-venice-eggshell dark:bg-venice-charcoal-medium'}`}
                     placeholder={isGeneratingPrompt ? "Analyzing image, please wait..." : "Describe desired style or changes..."}
                     value={settings.prompt || ''}
                     onChange={(e) => updateSettings({ prompt: e.target.value })}

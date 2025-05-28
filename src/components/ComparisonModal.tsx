@@ -9,17 +9,6 @@ interface ComparisonModalProps {
   // originalImage and enhancedImage will be sourced from context via comparisonImages
 }
 
-const veniceColors = {
-  stone: '#b1a993',
-  stoneDark: '#938b76',
-  red: '#ea463b',
-  redDark: '#c4352d',
-  blue: '#5c5330', // Using venice-dark-olive as a blue variant for now
-  blueDark: '#423b20',
-  white: '#ffffff',
-  // Add other Venice palette colors as needed
-};
-
 const ComparisonModal: React.FC<ComparisonModalProps> = ({ 
   isOpen, 
   onClose 
@@ -116,57 +105,22 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
           <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 w-full items-center justify-center p-2 bg-black/30 rounded-md">
             <button 
               onClick={() => handleDownload(originalImage, 'original_image.png')}
-              style={{
-                backgroundColor: veniceColors.stone,
-                color: veniceColors.white,
-                padding: '0.625rem 1.25rem',
-                borderRadius: '0.375rem', 
-                fontSize: '0.9375rem', 
-                fontWeight: 500, 
-                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', 
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = veniceColors.stoneDark)}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = veniceColors.stone)}
-              className="transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
+              className="bg-venice-stone hover:bg-venice-stone-dark text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
             >
               <Download size={16} className="mr-2" />
               Download Original
             </button>
             <button 
               onClick={() => handleDownload(enhancedImage, `${operationType}_image.png`)}
-              style={{
-                backgroundColor: veniceColors.red,
-                color: veniceColors.white,
-                padding: '0.625rem 1.25rem',
-                borderRadius: '0.375rem',
-                fontSize: '0.9375rem',
-                fontWeight: 500,
-                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = veniceColors.redDark)}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = veniceColors.red)}
-              className="transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
+              className="bg-venice-red hover:bg-venice-red-dark text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
             >
               <Download size={16} className="mr-2" />
               Download {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
             </button>
             <button 
               onClick={handleShare}
-              style={{
-                backgroundColor: veniceColors.blue,
-                color: veniceColors.white,
-                opacity: !navigator.share ? 0.6 : 1,
-                cursor: !navigator.share ? 'not-allowed' : 'pointer',
-                padding: '0.625rem 1.25rem',
-                borderRadius: '0.375rem',
-                fontSize: '0.9375rem',
-                fontWeight: 500,
-                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-              }}
-              onMouseEnter={(e) => { if (navigator.share) e.currentTarget.style.backgroundColor = veniceColors.blueDark; }}
-              onMouseLeave={(e) => { if (navigator.share) e.currentTarget.style.backgroundColor = veniceColors.blue; }}
               disabled={!navigator.share}
-              className="transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
+              className={`bg-blue-500 text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto ${navigator.share ? 'hover:bg-blue-700 cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
             >
               <Share2 size={16} className="mr-2" />
               Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
