@@ -63,7 +63,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/70 dark:bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4 transition-opacity duration-300 ease-in-out">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2 sm:p-4 transition-opacity duration-300 ease-in-out">
       <div className="p-1 sm:p-2 rounded-lg sm:rounded-xl shadow-xl w-full max-w-3xl lg:max-w-4xl max-h-[90vh] aspect-square overflow-hidden relative transition-all duration-300 ease-out">
         {/* Full-modal Interactive Image Comparison Slider */}
         <div className="absolute inset-0 w-full h-full z-0">

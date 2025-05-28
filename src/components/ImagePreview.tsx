@@ -166,7 +166,7 @@ const ImagePreview: React.FC = () => {
   return (
     <div className="w-full bg-venice-cream-dark rounded-lg shadow-lg">
       {/* Main Image Display Area */}
-      <div className="mb-6 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-xl relative aspect-video sm:aspect-[4/3] md:aspect-video lg:aspect-[16/9]">
+      <div className="mb-6 bg-white p-1 rounded-lg shadow-xl relative aspect-video sm:aspect-[4/3] md:aspect-video lg:aspect-[16/9]">
         {imageToDisplay ? (
           <>
             {imageToDisplay.status === 'scanning' ? (
@@ -249,7 +249,7 @@ const ImagePreview: React.FC = () => {
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="text-lg font-bold text-gray-400 dark:text-gray-600">No image selected</div>
+            <div className="text-lg font-bold text-gray-400">No image selected</div>
           </div>
         )}
       </div>
@@ -257,7 +257,7 @@ const ImagePreview: React.FC = () => {
       {/* Thumbnail Grid Area - only show if more than one image exists */}
       {images.length > 1 && (
         <div className="mb-2">
-          <h3 className="text-lg font-semibold mb-3 text-venice-olive-brown dark:text-venice-cream-dark">Uploaded Images</h3>
+          <h3 className="text-lg font-semibold mb-3 text-venice-olive-brown">Uploaded Images</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {images.map(img => (
               <ImageCard 

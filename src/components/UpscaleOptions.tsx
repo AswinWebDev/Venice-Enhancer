@@ -30,7 +30,7 @@ const UpscaleOptions: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="bg-venice-white dark:bg-gray-850 rounded-lg p-6 shadow-lg border border-venice-beige dark:border-gray-700">
+      <div className="bg-venice-white rounded-lg p-6 shadow-lg border border-venice-beige">
         <h3 className="text-xl font-semibold text-venice-olive-brown mb-6">
           Enhancement Settings
         </h3>
@@ -39,11 +39,11 @@ const UpscaleOptions: React.FC = () => {
           {/* Enhance Image Toggle Section (MOVED HERE) */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
+              <label className="text-sm font-medium text-venice-dark-olive">
                 <div className="flex items-center">
                   Enhance Image
                   <Tooltip text="Redraws the image at a higher resolution with added detail and creativity. Unlike simple upscaling, it lets the AI reinterpret parts of the image, often resulting in a more artistic or stylized version.">
-                    <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                    <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
                   </Tooltip>
                 </div>
               </label>
@@ -58,7 +58,7 @@ const UpscaleOptions: React.FC = () => {
                     updateSettings({ enhance: isEnhanceEnabled });
                   }}
                 />
-                <div className="w-11 h-6 bg-venice-beige peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-venice-red/50 rounded-full peer dark:bg-venice-stone/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-venice-bright-red"></div>
+                <div className="w-11 h-6 bg-venice-beige peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-venice-red/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-venice-bright-red"></div>
               </label>
             </div>
           </div>
@@ -68,25 +68,25 @@ const UpscaleOptions: React.FC = () => {
             {/* Prompt Section - Conditionally Rendered */}
             {settings.enhance && (
               <div>
-                <label className="block text-sm font-medium text-venice-dark-olive dark:text-venice-stone mb-1.5">
+                <label className="block text-sm font-medium text-venice-dark-olive mb-1.5">
                   <div className="flex items-center">
                     Prompt (Optional)
                     <Tooltip text="Describe the style (e.g. photo, anime) or materials (e.g. metal, glass) to guide results. Use simple prompts to preserve the image, or add subjects (e.g. mountain, cloud) to change it.">
-                      <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                      <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
                     </Tooltip>
                   </div>
                 </label>
                 <div className="relative">
                   <textarea
                     rows={3}
-                    className={`block w-full p-3 text-sm rounded-lg text-venice-deep-olive dark:text-venice-cream border border-venice-stone/60 dark:border-venice-charcoal-dark focus:outline-none focus:border-venice-stone/60 dark:focus:border-venice-charcoal-dark placeholder-venice-stone dark:placeholder-venice-stone/70 focus:ring-2 focus:ring-venice-red/50 dark:focus:ring-venice-red/60 duration-150 ease-in-out ${isGeneratingPrompt ? 'bg-venice-beige/50 dark:bg-venice-deep-olive/30 cursor-wait' : 'bg-venice-eggshell dark:bg-venice-charcoal-medium'}`}
+                    className={`block w-full p-3 text-sm rounded-lg text-venice-deep-olive border border-venice-stone/60 focus:outline-none focus:border-venice-stone/60 placeholder-venice-stone focus:ring-2 focus:ring-venice-red/50 duration-150 ease-in-out ${isGeneratingPrompt ? 'bg-venice-beige/50 cursor-wait' : 'bg-venice-eggshell'}`}
                     placeholder={isGeneratingPrompt ? "Analyzing image, please wait..." : "Describe desired style or changes..."}
                     value={settings.prompt || ''}
                     onChange={(e) => updateSettings({ prompt: e.target.value })}
                     disabled={isGeneratingPrompt}
                   />
                   {isGeneratingPrompt && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-850/70 rounded-md">
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-md">
                       <Loader2 size={24} className="animate-spin text-venice-red" />
                     </div>
                   )}
@@ -94,7 +94,7 @@ const UpscaleOptions: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => updateSettings({ prompt: '' })}
-                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       aria-label="Clear prompt"
                     >
                       <X size={18} />
@@ -102,7 +102,7 @@ const UpscaleOptions: React.FC = () => {
                   )}
                 </div>
                 {promptGenerationError && (
-                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                  <p className="mt-1.5 text-xs text-red-600">
                     Error generating prompt: {promptGenerationError}
                   </p>
                 )}
@@ -110,11 +110,11 @@ const UpscaleOptions: React.FC = () => {
             )}
 
           <div>
-            <label className="block text-sm font-medium text-venice-dark-olive dark:text-venice-stone mb-2">
+            <label className="block text-sm font-medium text-venice-dark-olive mb-2">
               <div className="flex items-center">
                 Scale
                 <Tooltip text="The scale of the image to upscale. 2x is the default and recommended. 4x is the maximum scale.">
-                  <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                  <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
                 </Tooltip>
               </div>
             </label>
@@ -127,7 +127,7 @@ const UpscaleOptions: React.FC = () => {
                     py-2.5 px-4 rounded-md text-sm font-medium transition-all
                     ${settings.scale === option.value 
                       ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-transparent hover:bg-gray-200 dark:hover:bg-gray-750'}
+                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'}
                     ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                   onClick={() => setScale(option.value)}
@@ -143,7 +143,7 @@ const UpscaleOptions: React.FC = () => {
             <button
               type="button"
               onClick={toggleAdvanced}
-              className="flex items-center justify-between w-full py-2.5 px-3.5 rounded-md text-venice-dark-olive dark:text-venice-stone hover:bg-venice-beige/60 dark:hover:bg-venice-deep-olive/30 transition-colors"
+              className="flex items-center justify-between w-full py-2.5 px-3.5 rounded-md text-venice-dark-olive hover:bg-venice-beige/60 transition-colors"
             >
               <span className="font-medium">Advanced Options</span>
               <ChevronDown
@@ -158,15 +158,15 @@ const UpscaleOptions: React.FC = () => {
             `}>
               <div className="mb-4">
                 <div className="flex justify-between mb-1">
-                  <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
+                  <label className="text-sm font-medium text-venice-dark-olive">
                     <div className="flex items-center">
                       Creativity
                       <Tooltip text="How much creative freedom the AI has. Higher values can lead to more imaginative and stylized results, but may deviate more from the original image. Lower values stick closer to the original." position="bottom">
-                        <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                        <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
                       </Tooltip>
                     </div>
                   </label>
-                  <span className="text-sm text-venice-olive-brown dark:text-venice-stone/80">
+                  <span className="text-sm text-venice-olive-brown">
                     {settings.creativity.toFixed(2)} {/* Show two decimal places for 0.05 step */}
                   </span>
                 </div>
@@ -178,9 +178,9 @@ const UpscaleOptions: React.FC = () => {
                   value={settings.creativity} // Value is managed by AppContext
                   disabled={!settings.enhance || isGeneratingPrompt} // Disabled when enhance is off or generating prompt
                   onChange={(e) => updateSettings({ creativity: parseFloat(e.target.value) })}
-                  className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red dark:bg-venice-stone/50"
+                  className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
-                <div className="flex justify-between text-xs text-venice-olive-brown dark:text-venice-stone/80 mt-1">
+                <div className="flex justify-between text-xs text-venice-olive-brown mt-1">
                   <span>Subtle</span>
                   <span>Inventive</span>
                 </div>
@@ -188,15 +188,15 @@ const UpscaleOptions: React.FC = () => {
               
               <div>
                 <div className="flex justify-between mb-1">
-                  <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
+                  <label className="text-sm font-medium text-venice-dark-olive">
                     <div className="flex items-center">
                       Adherence
                       <Tooltip text="How closely the output should adhere to the original image. Lower values allow more smoothing and AI interpretation. Higher values preserve details but may amplify imperfections or noise." position="top">
-                        <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                        <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
                       </Tooltip>
                     </div>
                   </label>
-                  <span className="text-sm text-venice-olive-brown dark:text-venice-stone/80">
+                  <span className="text-sm text-venice-olive-brown">
                     {settings.adherence.toFixed(2)} {/* Show two decimal places for 0.05 step */}
                   </span>
                 </div>
@@ -208,9 +208,9 @@ const UpscaleOptions: React.FC = () => {
                   value={settings.adherence}
                   disabled={isGeneratingPrompt} // Adherence only disabled during prompt generation
                   onChange={(e) => updateSettings({ adherence: parseFloat(e.target.value) })}
-                  className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red dark:bg-venice-stone/50"
+                  className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
-                <div className="flex justify-between text-xs text-venice-olive-brown dark:text-venice-stone/80 mt-1">
+                <div className="flex justify-between text-xs text-venice-olive-brown mt-1">
                   <span>Loose</span>
                   <span>Faithful</span>
                 </div>
@@ -234,7 +234,7 @@ const UpscaleOptions: React.FC = () => {
                   enhance: true 
                 });
               }}
-              className="w-full py-2.5 px-4 rounded-lg text-sm text-venice-olive-brown dark:text-venice-stone hover:bg-venice-beige/70 dark:hover:bg-venice-deep-olive/40 border border-venice-stone/50 transition-colors"
+              className="w-full py-2.5 px-4 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors"
             >
               Reset to Defaults
             </button>
@@ -247,7 +247,7 @@ const UpscaleOptions: React.FC = () => {
           className={`
             w-full py-3.5 px-4 mt-8 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-base
             ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
-              ? 'bg-venice-stone/70 dark:bg-venice-deep-olive/70 cursor-not-allowed'
+              ? 'bg-venice-stone/70 cursor-not-allowed'
               : 'bg-venice-bright-red hover:bg-d94f38 shadow-lg hover:shadow-xl transform hover:scale-105'}
           `}
           onClick={enhanceImages}

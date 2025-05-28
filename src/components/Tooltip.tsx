@@ -35,7 +35,7 @@ const Tooltip: React.FC<TooltipProps> = ({ text, children, position = 'top' }) =
       {children}
       {isVisible && (
         <div 
-          className="absolute z-50 px-3 py-2 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-sm dark:bg-gray-700"
+          className="absolute z-50 px-3 py-2 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-sm"
           style={{...getTooltipPositionStyles(), minWidth: '200px' , zIndex: 5000}}
           role="tooltip"
         >
