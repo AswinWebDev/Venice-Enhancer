@@ -346,7 +346,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         enhance: settings.enhance,
         enhanceCreativity: settings.creativity,
         replication: settings.adherence, // Mapping adherence to replication as per API docs
-        enhancePrompt: settings.prompt || '', // API expects a string, send empty if no prompt
+        enhancePrompt: settings.enhance ? (settings.prompt || '') : '', // Send empty prompt if enhance is false
       };
 
       const response = await fetch('https://api.venice.ai/api/v1/image/upscale', {

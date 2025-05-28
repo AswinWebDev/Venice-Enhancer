@@ -2,6 +2,7 @@ import React from 'react';
 import { ChevronDown, Wand2, Info, X, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ScaleOption } from '../types';
+import Tooltip from './Tooltip';
 
 const UpscaleOptions: React.FC = () => {
   const { 
@@ -34,10 +35,87 @@ const UpscaleOptions: React.FC = () => {
           Enhancement Settings
         </h3>
         
-        <div className={`space-y-6 ${isGeneratingPrompt ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`${isGeneratingPrompt ? 'opacity-50 pointer-events-none' : ''}`}> {/* NEW PARENT DIV for disabling logic */}
+          {/* Enhance Image Toggle Section (MOVED HERE) */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
+                <div className="flex items-center">
+                  Enhance Image
+                  <Tooltip text="Redraws the image at a higher resolution with added detail and creativity. Unlike simple upscaling, it lets the AI reinterpret parts of the image, often resulting in a more artistic or stylized version.">
+                    <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                  </Tooltip>
+                </div>
+              </label>
+              <label htmlFor="enhance-toggle" className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  id="enhance-toggle"
+                  className="sr-only peer" 
+                  checked={settings.enhance}
+                  onChange={(e) => updateSettings({ enhance: e.target.checked })}
+                />
+                <div className="w-11 h-6 bg-venice-beige peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-venice-red/50 rounded-full peer dark:bg-venice-stone/50 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-venice-bright-red"></div>
+              </label>
+            </div>
+          </div>
+
+          {/* Original settings div, now only with space-y-6 */}
+          <div className="space-y-6">
+            {/* Prompt Section - Conditionally Rendered */}
+            {settings.enhance && (
+              <div>
+                <label className="block text-sm font-medium text-venice-dark-olive dark:text-venice-stone mb-1.5">
+                  <div className="flex items-center">
+                    Prompt (Optional)
+                    <Tooltip text="Describe the style (e.g. photo, anime) or materials (e.g. metal, glass) to guide results. Use simple prompts to preserve the image, or add subjects (e.g. mountain, cloud) to change it.">
+                      <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                    </Tooltip>
+                  </div>
+                </label>
+                <div className="relative">
+                  <textarea
+                    rows={3}
+                    className={`w-full p-3 pr-10 border rounded-md shadow-sm focus:ring-venice-bright-red focus:border-venice-bright-red sm:text-sm resize-none dark:text-white
+                      ${isGeneratingPrompt ? 'bg-venice-beige/50 dark:bg-venice-deep-olive/30 cursor-wait' : 'border-venice-stone/70 bg-white dark:bg-venice-deep-olive/20 dark:border-venice-stone/50'}
+                    `}
+                    placeholder={isGeneratingPrompt ? "Analyzing image, please wait..." : "Describe desired style or changes..."}
+                    value={settings.prompt || ''}
+                    onChange={(e) => updateSettings({ prompt: e.target.value })}
+                    disabled={isGeneratingPrompt}
+                  />
+                  {isGeneratingPrompt && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-850/70 rounded-md">
+                      <Loader2 size={24} className="animate-spin text-venice-red" />
+                    </div>
+                  )}
+                  {!isGeneratingPrompt && settings.prompt && (
+                    <button
+                      type="button"
+                      onClick={() => updateSettings({ prompt: '' })}
+                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                      aria-label="Clear prompt"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+                {promptGenerationError && (
+                  <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                    Error generating prompt: {promptGenerationError}
+                  </p>
+                )}
+              </div>
+            )}
+
           <div>
             <label className="block text-sm font-medium text-venice-dark-olive dark:text-venice-stone mb-2">
-              Upscale Factor
+              <div className="flex items-center">
+                Scale
+                <Tooltip text="The scale of the image to upscale. 2x is the default and recommended. 4x is the maximum scale.">
+                  <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                </Tooltip>
+              </div>
             </label>
             <div className="grid grid-cols-3 gap-3">
               {scaleOptions.map((option) => (
@@ -49,8 +127,10 @@ const UpscaleOptions: React.FC = () => {
                     ${settings.scale === option.value 
                       ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
                       : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-2 border-transparent hover:bg-gray-200 dark:hover:bg-gray-750'}
+                    ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                   onClick={() => setScale(option.value)}
+                  disabled={!settings.enhance && option.value === '1x'}
                 >
                   {option.label}
                 </button>
@@ -73,12 +153,17 @@ const UpscaleOptions: React.FC = () => {
             
             <div className={`
               mt-3 transition-all duration-300 overflow-hidden
-              ${isAdvancedOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}
+              ${isAdvancedOpen ? 'max-h-56 opacity-100' : 'max-h-0 opacity-0'} {/* Adjusted max-h after moving toggle */}
             `}>
               <div className="mb-4">
                 <div className="flex justify-between mb-1">
                   <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
-                    Creativity
+                    <div className="flex items-center">
+                      Creativity
+                      <Tooltip text="How much creative freedom the AI has when enhancing. Higher values let it invent new details, similar to a higher temperature in text models.">
+                        <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                      </Tooltip>
+                    </div>
                   </label>
                   <span className="text-sm text-venice-olive-brown dark:text-venice-stone/80">
                     {settings.creativity.toFixed(1)}
@@ -102,7 +187,12 @@ const UpscaleOptions: React.FC = () => {
               <div>
                 <div className="flex justify-between mb-1">
                   <label className="text-sm font-medium text-venice-dark-olive dark:text-venice-stone">
-                    Adherence
+                    <div className="flex items-center">
+                      Adherence
+                      <Tooltip text="How closely the output should adhere to the original image. Lower values allow more smoothing and AI interpretation. Higher values preserve details but may amplify imperfections or noise.">
+                        <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70 cursor-help" />
+                      </Tooltip>
+                    </div>
                   </label>
                   <span className="text-sm text-venice-olive-brown dark:text-venice-stone/80">
                     {settings.adherence.toFixed(1)}
@@ -122,49 +212,12 @@ const UpscaleOptions: React.FC = () => {
                   <span>Faithful</span>
                 </div>
               </div>
+
+
             </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-venice-dark-olive dark:text-venice-stone mb-1.5">
-              <div className="flex items-center">
-                Prompt (Optional)
-                <Info size={14} className="ml-1.5 text-venice-stone dark:text-venice-stone/70" />
-              </div>
-            </label>
-            <div className="relative">
-              <textarea
-                rows={3}
-                className={`w-full p-3 pr-10 border rounded-md shadow-sm focus:ring-venice-bright-red focus:border-venice-bright-red sm:text-sm resize-none dark:text-white
-                  ${isGeneratingPrompt ? 'bg-venice-beige/50 dark:bg-venice-deep-olive/30 cursor-wait' : 'border-venice-stone/70 bg-white dark:bg-venice-deep-olive/20 dark:border-venice-stone/50'}
-                `}
-                placeholder={isGeneratingPrompt ? "Analyzing image, please wait..." : "Describe desired style or changes..."}
-                value={settings.prompt || ''}
-                onChange={(e) => updateSettings({ prompt: e.target.value })}
-                disabled={isGeneratingPrompt}
-              />
-              {isGeneratingPrompt && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/70 dark:bg-gray-850/70 rounded-md">
-                  <Loader2 size={24} className="animate-spin text-venice-red" />
-                </div>
-              )}
-              {!isGeneratingPrompt && settings.prompt && (
-                <button
-                  type="button"
-                  onClick={() => updateSettings({ prompt: '' })}
-                  className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
-                  aria-label="Clear prompt"
-                >
-                  <X size={18} />
-                </button>
-              )}
-            </div>
-            {promptGenerationError && (
-              <p className="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                Error generating prompt: {promptGenerationError}
-              </p>
-            )}
-          </div>
+
           
           <div className="mt-6">
             <button
@@ -178,18 +231,19 @@ const UpscaleOptions: React.FC = () => {
               Reset to Defaults
             </button>
           </div>
+          </div> {/* Closing new parent div for opacity logic */}
         </div> 
 
         <button
           type="button"
           className={`
             w-full py-3.5 px-4 mt-8 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-base
-            ${!hasSelectedImage || isProcessing || isGeneratingPrompt
+            ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
               ? 'bg-venice-stone/70 dark:bg-venice-deep-olive/70 cursor-not-allowed'
               : 'bg-venice-bright-red hover:bg-d94f38 shadow-lg hover:shadow-xl transform hover:scale-105'}
           `}
           onClick={enhanceImages}
-          disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt}
+          disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
         >
           {isProcessing ? (
             <>
@@ -204,7 +258,17 @@ const UpscaleOptions: React.FC = () => {
           ) : (
             <>
               <Wand2 size={20} className="mr-2" />
-              Enhance Image
+              {(() => {
+                const scaleLabel = settings.scale === '1x' ? 'Original' : settings.scale === '2x' ? '2x' : 'Max';
+                if (settings.enhance) {
+                  return `Enhance ${scaleLabel}`;
+                }
+                // Enhance is OFF
+                if (settings.scale === '1x') {
+                  return `Upscale Original`; // Text changed, disabled state handled by button's disabled prop
+                }
+                return `Upscale ${scaleLabel}`;
+              })()}
             </>
           )}
         </button>
