@@ -8,6 +8,17 @@ interface ComparisonModalProps {
   // originalImage and enhancedImage will be sourced from context via comparisonImages
 }
 
+const veniceColors = {
+  stone: '#b1a993',
+  stoneDark: '#938b76',
+  red: '#ea463b',
+  redDark: '#c4352d',
+  blue: '#5c5330', // Using venice-dark-olive as a blue variant for now
+  blueDark: '#423b20',
+  white: '#ffffff',
+  // Add other Venice palette colors as needed
+};
+
 const ComparisonModal: React.FC<ComparisonModalProps> = ({ 
   isOpen, 
   onClose 
@@ -62,73 +73,117 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 transition-opacity duration-300 ease-in-out">
-      <div className="bg-venice-cream p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto relative border border-venice-olive-brown/20 transform transition-all duration-300 ease-in-out scale-95 group-hover:scale-100">
+    <div className="fixed inset-0 bg-black/70 dark:bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4 transition-opacity duration-300 ease-in-out">
+      <div className="bg-venice-cream dark:bg-venice-charcoal-dark p-4 py-6 sm:p-6 md:p-8 rounded-lg sm:rounded-xl shadow-xl w-full max-w-3xl lg:max-w-4xl max-h-[90vh] overflow-y-auto relative border border-venice-gray-light dark:border-venice-charcoal-medium transition-all duration-300 ease-out">
         <button 
           onClick={onClose} 
-          className="absolute top-4 right-4 text-venice-olive-brown hover:text-venice-red p-1 rounded-full hover:bg-venice-red/10 transition-colors z-10"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-venice-gray-dark dark:text-venice-gray-light hover:text-venice-red-dark dark:hover:text-venice-red-light p-2 bg-transparent hover:bg-venice-red/10 dark:hover:bg-venice-red-dark/20 rounded-full transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-venice-red-light focus:ring-opacity-50 z-10"
           aria-label="Close modal"
         >
           <X size={28} />
         </button>
 
-        <h2 className="text-3xl font-bold mb-8 text-center text-venice-charcoal">Compare Images</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-venice-charcoal dark:text-venice-cream-dark">Compare Images</h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8">
-          {/* Original Image Section */}
-          <div className="flex flex-col items-center">
-            <h3 className="text-xl font-semibold mb-3 text-venice-olive-brown">Original</h3>
-            <div className="w-full aspect-[3/4] bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden shadow-lg mb-4">
-              <img src={originalImage} alt="Original" className="w-full h-full object-contain" />
-            </div>
-            <button 
-              onClick={() => handleDownload(originalImage, 'original_image.png')}
-              className="mt-2 py-2.5 px-5 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
-              style={{
-                backgroundColor: '#b1a993', // venice-stone
-                color: '#ffffff'
-              }}
-            >
-              <Download size={18} className="mr-2" />
-              Download Original
-            </button>
+        {/* Diagonal Split Image Viewer */}
+        <div className="w-full max-w-md mx-auto aspect-square relative overflow-hidden rounded-md shadow-lg mb-3 sm:mb-5" style={{ backgroundColor: '#e0e0e0' /* Fallback background */}}>
+          {/* Base Image (Enhanced/Upscaled) */}
+          <img 
+            src={enhancedImage} 
+            alt={operationType === 'upscaled' ? 'Upscaled Version' : 'Enhanced Version'} 
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+          {/* Overlay Image (Original - Clipped) */}
+          <img 
+            src={originalImage} 
+            alt="Original Version (Clipped)" 
+            className="absolute inset-0 w-full h-full object-contain"
+            style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+          />
+          {/* Labels */}
+          <div 
+            className="absolute top-2 left-2 px-2 py-1 rounded text-xs sm:text-sm font-semibold"
+            style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
+          >
+            Original
           </div>
-
-          {/* Enhanced Image Section */}
-          <div className="flex flex-col items-center">
-            <h3 className="text-xl font-semibold mb-3 text-venice-olive-brown">{operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}</h3>
-            <div className="w-full aspect-[3/4] bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden shadow-lg mb-4">
-              <img src={enhancedImage} alt={operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} className="w-full h-full object-contain" />
-            </div>
-            <button 
-              onClick={() => handleDownload(enhancedImage, `${operationType}_image.png`)}
-              className="mt-2 py-2.5 px-5 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto"
-              style={{
-                backgroundColor: '#ea463b', // venice-bright-red
-                color: '#ffffff'
-              }}
-            >
-              <Download size={18} className="mr-2" />
-              Download {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
-            </button>
+          <div 
+            className="absolute bottom-2 right-2 px-2 py-1 rounded text-xs sm:text-sm font-semibold"
+            style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: veniceColors.white }}
+          >
+            {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
           </div>
         </div>
 
-        {/* Share Button Section */}
-        <div className="mt-6 sm:mt-8 pt-6 border-t border-venice-olive-brown/20 text-center">
-          <button 
-            onClick={handleShare}
-            className="py-2.5 px-6 rounded-lg transition-colors flex items-center justify-center text-sm font-medium shadow-md hover:shadow-lg w-full sm:w-auto mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!navigator.share} 
-            style={{
-              backgroundColor: '#5c5330', // venice-dark-olive
-              color: '#ffffff'
-            }}
-          >
-            <Share2 size={18} className="mr-2" />
-            Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} Image
-          </button>
-          { !navigator.share && <p className='text-xs text-venice-gray-medium mt-2'>Sharing not available in this browser.</p>}
+        {/* Action Buttons & Share Info */}
+        <div className="flex flex-col items-center w-full mt-4">
+          <div className="flex flex-row justify-center space-x-3 w-full">
+            <button 
+              onClick={() => handleDownload(originalImage, 'original_image.png')}
+              style={{
+                backgroundColor: veniceColors.stone,
+                color: veniceColors.white,
+                padding: '0.625rem 1.25rem',
+                borderRadius: '0.375rem', 
+                fontSize: '0.9375rem', 
+                fontWeight: 500, 
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)', 
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = veniceColors.stoneDark)}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = veniceColors.stone)}
+              className="transition-colors duration-150 flex items-center justify-center"
+            >
+              <Download size={16} className="mr-2" />
+              Download Original
+            </button>
+            <button 
+              onClick={() => handleDownload(enhancedImage, `${operationType}_image.png`)}
+              style={{
+                backgroundColor: veniceColors.red,
+                color: veniceColors.white,
+                padding: '0.625rem 1.25rem',
+                borderRadius: '0.375rem',
+                fontSize: '0.9375rem',
+                fontWeight: 500,
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = veniceColors.redDark)}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = veniceColors.red)}
+              className="transition-colors duration-150 flex items-center justify-center"
+            >
+              <Download size={16} className="mr-2" />
+              Download {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
+            </button>
+            <button 
+              onClick={handleShare}
+              style={{
+                backgroundColor: veniceColors.blue,
+                color: veniceColors.white,
+                opacity: !navigator.share ? 0.6 : 1,
+                cursor: !navigator.share ? 'not-allowed' : 'pointer',
+                padding: '0.625rem 1.25rem',
+                borderRadius: '0.375rem',
+                fontSize: '0.9375rem',
+                fontWeight: 500,
+                boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              }}
+              onMouseEnter={(e) => { if (navigator.share) e.currentTarget.style.backgroundColor = veniceColors.blueDark; }}
+              onMouseLeave={(e) => { if (navigator.share) e.currentTarget.style.backgroundColor = veniceColors.blue; }}
+              disabled={!navigator.share}
+              className="transition-colors duration-150 flex items-center justify-center"
+            >
+              <Share2 size={16} className="mr-2" />
+              Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
+            </button>
+          </div>
+          { !navigator.share && 
+            <p 
+              className='text-xs mt-3 text-center'
+              style={{ color: '#757575' /* venice-gray. Consider dark mode styling if needed */ }}
+            >
+              Sharing not available in this browser.
+            </p>
+          }
         </div>
       </div>
     </div>
