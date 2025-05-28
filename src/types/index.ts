@@ -20,6 +20,7 @@ export interface EnhanceSettings {
   enhance: boolean;
   creativity: number;
   adherence: number;
+  prompt?: string;
 }
 
 export type ScaleOption = '1x' | '2x' | '4x';

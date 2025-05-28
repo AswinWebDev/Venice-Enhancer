@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, Wand2 } from 'lucide-react';
+import { ChevronDown, Wand2, Info, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { ScaleOption } from '../types';
 
@@ -122,6 +122,36 @@ const UpscaleOptions: React.FC = () => {
               </div>
             </div>
           </div>
+          
+          {/* Prompt Input Section Start */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <div className="flex items-center">
+                Prompt (optional)
+                <Info size={14} className="ml-1.5 text-gray-400 dark:text-gray-500" />
+              </div>
+            </label>
+            <div className="relative">
+              <textarea
+                rows={4}
+                className="w-full p-2.5 pr-10 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:ring-venice-red focus:border-venice-red dark:bg-gray-800 dark:text-white sm:text-sm resize-none"
+                placeholder="A young blue-skinned boy with a peacock feather..."
+                value={settings.prompt || ''}
+                onChange={(e) => updateSettings({ prompt: e.target.value })}
+              />
+              {settings.prompt && (
+                <button
+                  type="button"
+                  onClick={() => updateSettings({ prompt: '' })}
+                  className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
+                  aria-label="Clear prompt"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+          {/* Prompt Input Section End */}
           
           <button
             type="button"

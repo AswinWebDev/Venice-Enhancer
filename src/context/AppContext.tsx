@@ -36,6 +36,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     enhance: true,
     creativity: 0.5,
     adherence: 0.5,
+    prompt: "",
   });
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
