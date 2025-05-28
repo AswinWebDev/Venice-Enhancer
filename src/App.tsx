@@ -55,11 +55,11 @@ function AppContent() {
         </div>
       </main>
       
-      <ScanningModal 
+      {/* <ScanningModal 
         isOpen={isScanningModalOpen}
         onClose={closeScanningModal}
         imageName={scanningImageName}
-      />
+      /> */}
 
       {/* {isComparisonModalOpen && comparisonImages && ( // Temporarily commented out
         <ComparisonModal 
