@@ -143,7 +143,7 @@ const ImagePreview: React.FC = () => {
           {canEnhanceDisplayed && (
             <button 
               onClick={enhanceImages} 
-              className="p-2 bg-venice-green-dark/80 hover:bg-venice-green-dark rounded-full text-white transition-colors shadow-md"
+              className="p-2 bg-venice-green-dark hover:bg-venice-green text-white rounded-full transition-colors shadow-md"
               aria-label="Enhance Selected Image"
               title="Enhance Image"
             >
@@ -153,7 +153,7 @@ const ImagePreview: React.FC = () => {
           {canCompareDisplayed && imageToDisplay.enhanced && (
             <button 
               onClick={() => openComparisonModal(imageToDisplay!.preview, imageToDisplay!.enhanced!)}
-              className="p-2 bg-venice-blue-dark/80 hover:bg-venice-blue-dark rounded-full text-white transition-colors shadow-md"
+              className="p-2 bg-venice-blue-dark hover:bg-venice-blue text-white rounded-full transition-colors shadow-md"
               aria-label="View & Compare Selected Image"
               title="View & Compare"
             >
@@ -162,7 +162,7 @@ const ImagePreview: React.FC = () => {
           )}
           <button 
             onClick={() => removeImage(imageToDisplay!.id)} 
-            className="p-2 bg-venice-red-dark/80 hover:bg-venice-red-dark rounded-full text-white transition-colors shadow-md"
+            className="p-2 bg-venice-red-dark hover:bg-venice-red text-white rounded-full transition-colors shadow-md"
             aria-label="Remove Selected Image"
             title="Remove Image"
           >
