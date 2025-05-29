@@ -257,7 +257,7 @@ const UpscaleOptions: React.FC = () => {
           {isProcessing ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2.5"></div>
-              Enhancing...
+              Enhancing... (~1 min)
             </>
           ) : isGeneratingPrompt ? (
             <>
