@@ -69,6 +69,7 @@ const UploadArea: React.FC = () => {
         flex flex-col items-center justify-center
         cursor-pointer
       `}
+      style={{maxHeight:'15rem'}}
     >
       <input {...getInputProps()} />
       
