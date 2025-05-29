@@ -84,6 +84,7 @@ const UpscaleOptions: React.FC = () => {
                     value={settings.prompt || ''}
                     onChange={(e) => updateSettings({ prompt: e.target.value })}
                     disabled={isGeneratingPrompt}
+                    style={{ fontSize: '100%' }}
                   />
                   {isGeneratingPrompt && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-md">

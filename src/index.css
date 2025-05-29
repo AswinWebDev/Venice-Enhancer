@@ -6,7 +6,7 @@
 
 @layer base {
   html {
-    font-size: 116.5%; /* Default 1rem = 18px (if browser default is 16px) */
+    font-size: 120.5%; /* Default 1rem = 18px (if browser default is 16px) */
   }
   body {
     @apply bg-venice-cream text-venice-olive-brown font-sans;
