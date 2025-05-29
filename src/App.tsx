@@ -34,7 +34,7 @@ function AppContent() {
                <span className="text-venice-bright-red">Venice</span> <span className="text-venice-deep-olive">Enhancer</span> 
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl text-venice-dark-olive mb-10 max-w-2xl">
-                Elevate your visuals. Effortlessly upscale and enhance your images with our cutting-edge AI, revealing stunning detail and clarity.
+              Experience the next level of image fidelity. Our advanced AI meticulously enhances and upscales, revealing crisp details and vibrant clarity in every picture.
               </p>
               <div className="w-full max-w-lg">
                 <UploadArea />

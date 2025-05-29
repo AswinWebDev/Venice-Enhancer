@@ -84,7 +84,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
         </button>
 
         {/* Overlaid Title */}
-        <h2 className="hidden sm:block absolute top-4 left-1/2 -translate-x-1/2 text-xl sm:text-2xl font-bold text-white p-2 bg-black/40 rounded-md z-20">Compare Images</h2>
+        <h2 className="hidden sm:block absolute top-4 left-1/2 -translate-x-1/2  font-bold text-white p-2 bg-black/40 rounded-md z-20" style={{fontWeight:500}}>Compare Images</h2>
         
         {/* Overlaid Original Badge */}
         <div 
@@ -101,8 +101,8 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
         </div>
 
         {/* Overlaid Action Buttons & Share Info */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center w-full max-w-xs sm:max-w-md z-20">
-          <div className="flex flex-row space-x-2 w-full items-center justify-center p-2 bg-black/30 rounded-md">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center w-full max-w-xs z-20" style={{ maxWidth: '10rem' , bottom:'0.1rem' }}>
+          <div className="flex flex-row space-x-2 w-full items-center justify-center p-2 bg-black/20 rounded-md gap-5">
             <button 
               onClick={() => handleDownload(enhancedImage, `${operationType}_image.png`)}
               className="bg-venice-red hover:bg-venice-red-dark text-white p-2 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center"
@@ -115,6 +115,7 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
               disabled={!navigator.share}
               className={`bg-venice-blue hover:bg-venice-blue-dark text-white p-2 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center ${navigator.share ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
               aria-label={`Share ${operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} Image`}
+              style={{ backgroundColor: '#007bff', color: '#ffffff' }}
             >
               <Share2 size={16} />
             </button>
