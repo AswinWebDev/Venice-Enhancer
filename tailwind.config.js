@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['"Markazi Text"', 'serif'],
+        cursive: ['"Mea Culpa"', 'cursive'],
+      },
       colors: {
         'venice-red': '#ff3333',
         'venice-light': '#ff4d4d',
