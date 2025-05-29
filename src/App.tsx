@@ -34,14 +34,14 @@ function AppContent() {
                <span className="text-venice-bright-red">Venice</span> <span className="text-venice-deep-olive">Enhancer</span> 
               </h1>
               <p className="text-lg sm:text-xl md:text-2xl text-venice-dark-olive mb-10 max-w-xl font-sans">
-              Experience the next level of image fidelity. Our advanced AI meticulously enhances and upscales, revealing crisp details and vibrant clarity in every picture.
+              Upload and Enhance your images effortlessly
               </p>
               <div className="w-full max-w-lg" style={{maxWidth:'27rem'}}>
                 <UploadArea />
               </div>
-              <p className="mt-10 text-sm text-venice-olive-brown">
+              {/* <p className="mt-10 text-sm text-venice-olive-brown">
                 Experience the art of AI-powered image perfection.
-              </p>
+              </p> */}
             </div>
           )}
             
