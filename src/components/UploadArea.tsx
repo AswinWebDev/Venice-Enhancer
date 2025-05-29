@@ -43,7 +43,7 @@ const UploadArea: React.FC = () => {
 
   if (isMobile) {
     return (
-      <div className="flex justify-center my-8" style={{marginBottom: '20rem'}}>
+      <div className="flex justify-center my-8" style={{marginBottom: '2rem'}}>
         <button
           {...getRootProps({ className: 'py-3 px-6 bg-venice-red text-white rounded-lg font-semibold shadow-md hover:bg-venice-red-dark transition-colors flex items-center' })}
           type="button"
