@@ -102,29 +102,21 @@ const ComparisonModal: React.FC<ComparisonModalProps> = ({
 
         {/* Overlaid Action Buttons & Share Info */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center w-full max-w-xs sm:max-w-md z-20">
-          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 w-full items-center justify-center p-2 bg-black/30 rounded-md">
-            <button 
-              onClick={() => handleDownload(originalImage, 'original_image.png')}
-              className="bg-venice-stone hover:bg-venice-stone-dark text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
-            >
-              <Download size={16} className="mr-2" />
-              Download Original
-            </button>
+          <div className="flex flex-row space-x-2 w-full items-center justify-center p-2 bg-black/30 rounded-md">
             <button 
               onClick={() => handleDownload(enhancedImage, `${operationType}_image.png`)}
-              className="bg-venice-red hover:bg-venice-red-dark text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto"
+              className="bg-venice-red hover:bg-venice-red-dark text-white p-2 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center"
+              aria-label={`Download ${operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} Image`}
             >
-              <Download size={16} className="mr-2" />
-              Download {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
+              <Download size={16} />
             </button>
             <button 
               onClick={handleShare}
               disabled={!navigator.share}
-              className={`text-white py-2 px-4 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center w-full sm:w-auto ${navigator.share ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
-              style={{ backgroundColor: '#007bff', color: '#ffffff' }}
+              className={`bg-venice-blue hover:bg-venice-blue-dark text-white p-2 rounded-md text-sm font-medium shadow-sm transition-colors duration-150 flex items-center justify-center ${navigator.share ? 'cursor-pointer' : 'opacity-60 cursor-not-allowed'}`}
+              aria-label={`Share ${operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'} Image`}
             >
-              <Share2 size={16} className="mr-2" />
-              Share {operationType === 'upscaled' ? 'Upscaled' : 'Enhanced'}
+              <Share2 size={16} />
             </button>
           </div>
           { !navigator.share && 
