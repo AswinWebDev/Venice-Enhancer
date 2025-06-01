@@ -15,7 +15,7 @@ const ThumbnailBar: React.FC = () => {
   }
 
   const buttonStripHeightClass = 'h-12'; // Approx 3rem
-  const contentAreaTargetHeightClass = 'h-[12rem]'; // 12rem for content when open
+  const contentOpenMaxHeightClass = 'max-h-[12rem]'; // Use max-height for smooth transition
 
   const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
   const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
@@ -43,7 +43,7 @@ const ThumbnailBar: React.FC = () => {
       {/* Main Animated Container - Controls overall height and positioning. Ref for click outside. */}
       <div
         ref={panelRef} // Add ref here
-        className={`pointer-events-auto transition-all duration-300 ease-in-out w-full 
+        className={`pointer-events-auto transition-[max-height] duration-500 ease-out w-full 
                     overflow-visible /* Allow children to overflow for different widths/shadows */ 
                     ${activeBottomPanelView !== 'closed' ? openPanelMaxHeight : closedPanelMaxHeight}`}
       >
@@ -80,35 +80,38 @@ const ThumbnailBar: React.FC = () => {
 
         {/* Content Area - Wider, Appears/disappears BELOW the button strip */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden w-full 
-                      bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-lg /* Glassmorphic */
-                      /* No top rounding, should feel like it's under the button strip */
-                      /* The connection point is tricky. Button strip has bottom edge. Content area has top edge. */
-                      /* We want them to look like one surface. */
-                      mt-[-1px] /* Attempt to pull up to meet button strip bottom */
-                      ${activeBottomPanelView !== 'closed' ? `${contentAreaTargetHeightClass} opacity-100 p-2 border-x border-b border-white/25 dark:border-slate-700/25` : 'max-h-0 opacity-0 p-0'}`}
+          className={`transition-[max-height] duration-500 ease-out overflow-hidden w-full
+                      ${activeBottomPanelView !== 'closed' ? contentOpenMaxHeightClass : 'max-h-0'}`}
         >
-          <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent">
-            {activeBottomPanelView === 'thumbnails' && (
-              <div className="flex overflow-x-auto space-x-2 py-1">
-                {images.map(image => (
-                  <ThumbnailItem
-                    key={image.id}
-                    image={image}
-                    isSelected={image.id === selectedImageId}
-                    isPromptGenerated={!!image.settings.prompt && image.status !== 'scanning'}
-                    onClick={(id) => {
-                      selectImage(id);
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-            {activeBottomPanelView === 'history' && selectedImage && (
-              <CompactHistoryView selectedImage={selectedImage} />
-            )}
-          </div>
-        </div>
+          {/* Middle Content Div: Handles opacity, background, borders, shadow */}
+          <div
+            className={`transition-[opacity,visibility] duration-500 ease-out w-full h-full 
+                        bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-lg /* Glassmorphic */
+                        ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible border-x border-b border-t border-white/25 dark:border-slate-700/25' : 'opacity-0 delay-500 invisible border-transparent'}`}
+          >
+            {/* Innermost Content Div: Handles padding and scrolling */}
+            <div className={`h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent ${activeBottomPanelView !== 'closed' ? 'p-2' : 'p-0'}`}> 
+              {activeBottomPanelView === 'thumbnails' && (
+                <div className="flex overflow-x-auto space-x-2 py-1">
+                  {images.map(image => (
+                    <ThumbnailItem
+                      key={image.id}
+                      image={image}
+                      isSelected={image.id === selectedImageId}
+                      isPromptGenerated={!!image.settings.prompt && image.status !== 'scanning'}
+                      onClick={(id) => {
+                        selectImage(id);
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+              {activeBottomPanelView === 'history' && selectedImage && (
+                <CompactHistoryView selectedImage={selectedImage} />
+              )}
+            </div> {/* Closing tag for Innermost Content Div */}
+          </div>   {/* Closing tag for Middle Content Div */}
+        </div>     {/* Closing tag for Outermost Content Div */}
       </div>
     </div>
   );
