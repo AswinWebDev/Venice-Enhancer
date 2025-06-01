@@ -6,9 +6,10 @@ interface ThumbnailItemProps {
   image: ImageFile;
   isSelected: boolean;
   onClick: (id: string) => void;
+  isPromptGenerated?: boolean;
 }
 
-const ThumbnailItem: React.FC<ThumbnailItemProps> = ({ image, isSelected, onClick }) => {
+const ThumbnailItem: React.FC<ThumbnailItemProps> = ({ image, isSelected, onClick, isPromptGenerated }) => {
   const baseRingClass = 'ring-2 transition-all duration-150 ease-in-out';
   const selectedRingClass = isSelected ? 'ring-venice-red ring-offset-2 ring-offset-gray-100 dark:ring-offset-gray-800' : 'ring-transparent hover:ring-venice-red/50';
 
@@ -21,7 +22,7 @@ const ThumbnailItem: React.FC<ThumbnailItemProps> = ({ image, isSelected, onClic
       <img 
         src={image.preview} 
         alt={image.name} 
-        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${!isPromptGenerated ? 'filter grayscale' : ''}`}
       />
       
       {/* Status Indicator */}

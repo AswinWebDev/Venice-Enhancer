@@ -27,6 +27,7 @@ const ThumbnailBar: React.FC = () => {
                   key={image.id}
                   image={image}
                   isSelected={image.id === selectedImageId}
+                  isPromptGenerated={!!image.settings.prompt && image.status !== 'scanning'}
                   onClick={(id) => {
                     selectImage(id);
                   }}
