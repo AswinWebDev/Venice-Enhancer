@@ -23,12 +23,12 @@ const ThumbnailBar: React.FC = () => {
       {/* Main Animated Container - This entire block changes height */}
       <div
         className={`pointer-events-auto transition-all duration-300 ease-in-out w-full max-w-screen-lg 
-                    bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl shadow-2xl rounded-t-2xl border-x border-t border-white/30 dark:border-slate-700/30
+                    bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-2xl rounded-t-[2rem] /* Increased rounding, e.g., 32px */ border-x border-t border-white/25 dark:border-slate-700/25
                     overflow-hidden 
                     ${activeBottomPanelView !== 'closed' ? openPanelMaxHeight : closedPanelMaxHeight}`}
       >
         {/* Button Strip - Always at the TOP of the main animated container */}
-        <div className={`flex justify-center ${buttonStripHeightClass} /* No top border here, parent has it */`}>
+        <div className={`flex justify-center ${buttonStripHeightClass} /* Parent provides top rounding and border */`}>
           <button
             onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
             className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
@@ -53,7 +53,8 @@ const ThumbnailBar: React.FC = () => {
 
         {/* Content Area - Appears/disappears BELOW the button strip */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden border-t border-white/20 dark:border-slate-700/20
+          className={`transition-all duration-300 ease-in-out overflow-hidden border-t border-white/25 dark:border-slate-700/25
+                      bg-white/10 dark:bg-slate-800/10 /* Subtle distinct background for content area */
                       ${activeBottomPanelView !== 'closed' ? `${contentAreaTargetHeightClass} opacity-100 p-2` : 'max-h-0 opacity-0 p-0'}`}
         >
           <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent">
