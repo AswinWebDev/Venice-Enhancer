@@ -2,78 +2,82 @@ import React from 'react';
 import { useApp } from '../context/AppContext';
 import ThumbnailItem from './ThumbnailItem';
 import CompactHistoryView from './CompactHistoryView';
-import { Images, ChevronUp, ChevronDown } from 'lucide-react';
+import { Images, History } from 'lucide-react';
 
 const ThumbnailBar: React.FC = () => {
   const { images, selectedImageId, selectImage, activeBottomPanelView, setActiveBottomPanelView } = useApp();
   const selectedImage = images.find(img => img.id === selectedImageId);
 
-
   if (images.length === 0) {
-    return null; 
+    return null;
   }
 
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-100 dark:bg-gray-800 shadow-top-strong z-40 flex flex-col">
-      {/* Thumbnails Container - content visibility toggled */}
-      <div 
-        className={`transition-all duration-300 ease-in-out overflow-hidden ${activeBottomPanelView !== 'closed' ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}
-      >
-        <div className="max-w-screen-xl mx-auto px-2 sm:px-4 pt-2 pb-1">
-                    {activeBottomPanelView === 'thumbnails' && (
-            <div className="flex overflow-x-auto space-x-2 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-700 py-2">
-              {images.map(image => (
-                <ThumbnailItem 
-                  key={image.id}
-                  image={image}
-                  isSelected={image.id === selectedImageId}
-                  isPromptGenerated={!!image.settings.prompt && image.status !== 'scanning'}
-                  onClick={(id) => {
-                    selectImage(id);
-                  }}
-                />
-              ))}
-            </div>
-          )}
-          {activeBottomPanelView === 'history' && (
-            <CompactHistoryView selectedImage={selectedImage} />
-          )}
-        </div>
-      </div>
+  // Define heights for clarity
+  const buttonStripHeightClass = 'h-12'; // Approx 3rem (buttons have py-3)
+  const contentAreaHeightClass = 'h-[12rem]'; // 12rem for content
+  
+  // Max heights for the main animated container
+  const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
+  const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
 
-      {/* Control Strip - always visible. TODO: Consider if this should also be part of the collapsible area or always visible */}
-      <div className="h-8 bg-gray-200 dark:bg-gray-700 border-t border-gray-300 dark:border-gray-600">
-                <div className="max-w-screen-xl mx-auto h-full flex items-center justify-between px-2 sm:px-4">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setActiveBottomPanelView('thumbnails')}
-                className={`flex items-center text-sm px-3 py-1 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-venice-red-500 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red-100 dark:bg-venice-red-700 text-venice-red-700 dark:text-venice-red-100' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'}`}
-                aria-label="Show thumbnails"
-                title="Show thumbnails"
-              >
-                <Images size={16} className="mr-1.5 opacity-80" />
-                Thumbnails
-              </button>
-              <button
-                onClick={() => setActiveBottomPanelView('history')}
-                disabled={!selectedImageId} // Disable if no image is selected
-                className={`flex items-center text-sm px-3 py-1 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-venice-red-500 ${activeBottomPanelView === 'history' ? 'bg-venice-red-100 dark:bg-venice-red-700 text-venice-red-700 dark:text-venice-red-100' : 'text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
-                aria-label="Show history"
-                title="Show history"
-              >
-                <ChevronUp size={16} className="mr-1.5 opacity-80" /> {/* Placeholder Icon, replace with History icon later */}
-                History
-              </button>
-            </div>
-            <button 
-              onClick={() => setActiveBottomPanelView(activeBottomPanelView !== 'closed' ? 'closed' : 'thumbnails')} // Toggle open/close, defaults to thumbnails if opening from closed state
-              className="flex items-center text-sm text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white focus:outline-none transition-colors"
-              aria-label={activeBottomPanelView !== 'closed' ? 'Close panel' : 'Open panel'}
-              title={activeBottomPanelView !== 'closed' ? 'Close panel' : 'Open panel'}
-            >
-              {activeBottomPanelView !== 'closed' ? <ChevronDown size={18} className="mr-1.5" /> : <ChevronUp size={18} className="mr-1.5" />}
-              <span>{activeBottomPanelView !== 'closed' ? 'Close' : 'Open'} Panel</span>
-            </button>
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center justify-end pointer-events-none">
+      {/* Main Animated Container - This entire block changes height */}
+      <div
+        className={`pointer-events-auto transition-all duration-300 ease-in-out w-full max-w-screen-lg 
+                    bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl shadow-2xl rounded-t-2xl border-x border-t border-white/30 dark:border-slate-700/30
+                    overflow-hidden 
+                    ${activeBottomPanelView !== 'closed' ? openPanelMaxHeight : closedPanelMaxHeight}`}
+      >
+        {/* Content Area - Appears/disappears within the main container */}
+        <div
+          className={`transition-all duration-300 ease-in-out overflow-hidden 
+                      ${activeBottomPanelView !== 'closed' ? `${contentAreaHeightClass} opacity-100 p-2` : 'max-h-0 opacity-0 p-0'}`}
+        >
+          <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent">
+            {activeBottomPanelView === 'thumbnails' && (
+              <div className="flex overflow-x-auto space-x-2 py-1">
+                {images.map(image => (
+                  <ThumbnailItem
+                    key={image.id}
+                    image={image}
+                    isSelected={image.id === selectedImageId}
+                    isPromptGenerated={!!image.settings.prompt && image.status !== 'scanning'}
+                    onClick={(id) => {
+                      selectImage(id);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+            {activeBottomPanelView === 'history' && selectedImage && (
+              <CompactHistoryView selectedImage={selectedImage} />
+            )}
+          </div>
+        </div>
+
+        {/* Button Strip - Always at the bottom of the main animated container */}
+        <div className={`flex justify-center ${buttonStripHeightClass} border-t border-white/20 dark:border-slate-700/20`}>
+          <button
+            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
+            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
+            aria-label="Show thumbnails"
+            title="Show thumbnails"
+          >
+            <Images size={16} className="mr-2" />
+            Thumbnails
+          </button>
+          <div className="w-px bg-white/30 dark:bg-slate-700/30"></div> {/* Vertical separator */}
+          <button
+            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
+            disabled={!selectedImageId}
+            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label="Show history"
+            title="Show history"
+          >
+            <History size={16} className="mr-2" />
+            History
+          </button>
         </div>
       </div>
     </div>
