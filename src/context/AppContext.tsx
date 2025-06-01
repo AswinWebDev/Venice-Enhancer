@@ -282,27 +282,6 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
     }
   };
 
-  const selectImage = (id: string | null) => {
-    const previouslySelectedId = selectedImageId;
-    setSelectedImageId(id);
-    const image = images.find(img => img.id === id);
-    if (image && previouslySelectedId !== id) {
-      // If selection changes, and the new image doesn't have a prompt yet (or we always want to refresh)
-      // We might want to clear the global prompt or trigger generation for the newly selected one.
-      // For now, let's clear the global prompt and trigger generation if it's 'idle'.
-      if (image.status === 'idle' || (image.status !== 'scanning' && !image.settings.prompt)) {
-        setPromptQueue((prevQueue: string[]) => {
-          const filteredQueue = prevQueue.filter((queuedId: string) => queuedId !== image.id);
-          // Add to front of queue, ensuring no duplicates
-          return [image.id, ...filteredQueue]; 
-        });
-      }
-      // If the image already has a prompt (e.g. loaded from history or previously generated and stored on ImageFile object)
-      // you might want to load that into settings.prompt instead.
-      // else if (image.generatedPrompt) { updateSettings({ prompt: image.generatedPrompt }); }
-    }
-  };
-
   const updateSettings = (newSettings: Partial<EnhanceSettings>) => {
     setImages(prevImages => prevImages.map(img => {
       if (img.id === selectedImageId) {
@@ -327,6 +306,23 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
       }
       return img;
     }));
+  };
+
+  const selectImage = (id: string | null) => {
+    setSelectedImageId(id);
+    if (id) {
+      const image = images.find(img => img.id === id);
+      // If the image is selected, exists, is idle, and doesn't have a prompt yet, add it to the queue.
+      if (image && image.status === 'idle' && !image.settings.prompt) {
+        setPromptQueue((prevQueue: string[]) => {
+          // Avoid adding duplicates to the queue
+          if (!prevQueue.includes(image.id)) {
+            return [...prevQueue, image.id];
+          }
+          return prevQueue;
+        });
+      }
+    }
   };
 
   const setScale = (scale: ScaleOption) => {

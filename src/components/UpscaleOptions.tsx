@@ -28,6 +28,7 @@ const UpscaleOptions: React.FC = () => {
   const selectedImage = images.find(img => img.id === selectedImageId);
   const currentSettings = selectedImage?.settings || FALLBACK_SETTINGS;
   const currentPromptError = selectedImage?.status === 'error' && selectedImage?.error ? selectedImage.error : null;
+  const isSelectedImageScanning = selectedImage?.status === 'scanning';
   
   const scaleOptions: { value: ScaleOption; label: string }[] = [
     { value: '1x', label: '1×' },
@@ -120,18 +121,18 @@ const UpscaleOptions: React.FC = () => {
                   <textarea
                     id="prompt"
                     rows={3}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-venice-red focus:ring-venice-red sm:text-sm p-3 resize-none placeholder-gray-400 ${selectedImage?.status === 'scanning' || isGeneratingPrompt ? 'bg-gray-100 cursor-wait' : 'bg-white'}`}
-                    placeholder={selectedImage?.status === 'scanning' || isGeneratingPrompt ? "Analyzing image and generating prompt..." : "Describe your desired style or leave blank for auto-magic..."}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-venice-red focus:ring-venice-red sm:text-sm p-3 resize-none placeholder-gray-400 ${isSelectedImageScanning ? 'bg-gray-100 cursor-wait' : 'bg-white'}`}
+                    placeholder={isSelectedImageScanning ? "Analyzing image and generating prompt..." : currentPromptError ? "Error generating prompt. Check console or try again." : "Describe your desired style or leave blank for auto-magic..."}
                     value={currentSettings.prompt || ''}
                     onChange={(e) => updateSettings({ prompt: e.target.value })}
-                    disabled={selectedImage?.status === 'scanning' || isGeneratingPrompt || !hasSelectedImage}
+                    disabled={isSelectedImageScanning || !hasSelectedImage || isProcessing}
                   />
-                  {(selectedImage?.status === 'scanning' || isGeneratingPrompt) && (
+                  {isSelectedImageScanning && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/50">
                       <Loader2 size={24} className="animate-spin text-venice-red" />
                     </div>
                   )}
-                  {currentSettings.prompt && !(selectedImage?.status === 'scanning' || isGeneratingPrompt) && (
+                  {currentSettings.prompt && !isSelectedImageScanning && (
                     <button 
                       onClick={() => updateSettings({ prompt: '' })}
                       className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-1 bg-white rounded-full"
@@ -183,7 +184,7 @@ const UpscaleOptions: React.FC = () => {
                   max="1"
                   step="0.05" // Step updated
                   value={currentSettings.creativity}
-                  disabled={!currentSettings.enhance || isGeneratingPrompt} // Creativity only disabled during prompt generation OR if enhance is off
+                  disabled={!currentSettings.enhance || isSelectedImageScanning} // Creativity disabled if enhance is off or selected image is scanning
                   onChange={(e) => updateSettings({ creativity: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
@@ -213,7 +214,7 @@ const UpscaleOptions: React.FC = () => {
                   max="1"
                   step="0.05" // Step updated
                   value={currentSettings.adherence}
-                  disabled={isGeneratingPrompt || !hasSelectedImage} // Adherence disabled during prompt generation or if no image selected
+                  disabled={isSelectedImageScanning || !hasSelectedImage} // Adherence disabled if selected image is scanning or no image selected
                   onChange={(e) => updateSettings({ adherence: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
