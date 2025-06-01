@@ -3,10 +3,12 @@ import { useApp } from '../context/AppContext';
 import ThumbnailItem from './ThumbnailItem';
 import CompactHistoryView from './CompactHistoryView';
 import { Images, History } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 const ThumbnailBar: React.FC = () => {
   const { images, selectedImageId, selectImage, activeBottomPanelView, setActiveBottomPanelView } = useApp();
   const selectedImage = images.find(img => img.id === selectedImageId);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   if (images.length === 0) {
     return null;
@@ -18,10 +20,29 @@ const ThumbnailBar: React.FC = () => {
   const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
   const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setActiveBottomPanelView('closed');
+      }
+    };
+
+    if (activeBottomPanelView !== 'closed') {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeBottomPanelView, setActiveBottomPanelView]);
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center justify-end pointer-events-none">
-      {/* Main Animated Container - Controls overall height and positioning */}
+      {/* Main Animated Container - Controls overall height and positioning. Ref for click outside. */}
       <div
+        ref={panelRef} // Add ref here
         className={`pointer-events-auto transition-all duration-300 ease-in-out w-full 
                     overflow-visible /* Allow children to overflow for different widths/shadows */ 
                     ${activeBottomPanelView !== 'closed' ? openPanelMaxHeight : closedPanelMaxHeight}`}
