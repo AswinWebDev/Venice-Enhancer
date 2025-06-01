@@ -226,7 +226,7 @@ const UpscaleOptions: React.FC = () => {
 
           
           {/* Buttons Row */}
-          <div className="mt-8 flex items-stretch space-x-3">
+          <div className="mt-8 flex items-stretch space-x-3 justify-center">
             <button
               type="button"
               onClick={() => { 
@@ -238,19 +238,21 @@ const UpscaleOptions: React.FC = () => {
                   enhance: true 
                 });
               }}
-              className="w-1/3 py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
+              className="py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
               disabled={isGeneratingPrompt} 
+              style={{minWidth: '30%'}}
             >
               Reset to Defaults
             </button>
             <button
               type="button"
               className={`
-                w-2/3 py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
+               py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
                 ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
                   ? 'bg-venice-stone/70 cursor-not-allowed'
                   : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
               `}
+              style={{minWidth: '45%'}}
               onClick={enhanceImages}
               disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
             >
