@@ -21,7 +21,7 @@ const UpscaleOptions: React.FC = () => {
   const scaleOptions: { value: ScaleOption; label: string }[] = [
     { value: '1x', label: '1×' },
     { value: '2x', label: '2×' },
-    { value: '4x', label: '4×' }
+    { value: '4x', label: 'Max' }
   ];
   
   const hasSelectedImage = images.length > 0 && selectedImageId;
@@ -225,64 +225,64 @@ const UpscaleOptions: React.FC = () => {
           
 
           
-          <div className="mt-6">
+          {/* Buttons Row */}
+          <div className="mt-8 flex items-stretch space-x-3">
             <button
               type="button"
               onClick={() => { 
                 updateSettings({ 
                   prompt: '', 
-                  creativity: 0.35, // Default updated
-                  adherence: 0.35,  // Default updated
+                  creativity: 0.35,
+                  adherence: 0.35,
                   scale: '2x', 
                   enhance: true 
                 });
               }}
-              className="w-full py-2.5 px-4 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors"
+              className="w-1/3 py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
+              disabled={isGeneratingPrompt} 
             >
               Reset to Defaults
             </button>
+            <button
+              type="button"
+              className={`
+                w-2/3 py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
+                ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
+                  ? 'bg-venice-stone/70 cursor-not-allowed'
+                  : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
+              `}
+              onClick={enhanceImages}
+              disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" /> {/* Adjusted icon size */}
+                  Enhancing...
+                </>
+              ) : isGeneratingPrompt ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" /> {/* Adjusted icon size */}
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Wand2 size={18} className="mr-1.5" /> {/* Adjusted icon size */}
+                  {(() => {
+                    const scaleLabel = settings.scale === '1x' ? 'Original' : settings.scale === '2x' ? '2x' : 'Max';
+                    if (settings.enhance) {
+                      return `Enhance ${scaleLabel}`;
+                    }
+                    if (settings.scale === '1x') {
+                      return `Upscale Original`;
+                    }
+                    return `Upscale ${scaleLabel}`;
+                  })()}
+                </>
+              )}
+            </button>
           </div>
           </div> {/* Closing new parent div for opacity logic */}
-        </div> 
-
-        <button
-          type="button"
-          className={`
-            w-full py-3.5 px-4 mt-8 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-base
-            ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
-              ? 'bg-venice-stone/70 cursor-not-allowed'
-              : 'bg-venice-bright-red hover:bg-d94f38 shadow-lg hover:shadow-xl transform hover:scale-105'}
-          `}
-          onClick={enhanceImages}
-          disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
-        >
-          {isProcessing ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2.5"></div>
-              Enhancing... (~1 min)
-            </>
-          ) : isGeneratingPrompt ? (
-            <>
-              <Loader2 size={20} className="animate-spin mr-2.5" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Wand2 size={20} className="mr-2" />
-              {(() => {
-                const scaleLabel = settings.scale === '1x' ? 'Original' : settings.scale === '2x' ? '2x' : 'Max';
-                if (settings.enhance) {
-                  return `Enhance ${scaleLabel}`;
-                }
-                // Enhance is OFF
-                if (settings.scale === '1x') {
-                  return `Upscale Original`; // Text changed, disabled state handled by button's disabled prop
-                }
-                return `Upscale ${scaleLabel}`;
-              })()}
-            </>
-          )}
-        </button>
+        </div>
       </div>
     </div>
   );
