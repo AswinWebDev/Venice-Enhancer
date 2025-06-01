@@ -92,7 +92,7 @@ const UpscaleOptions: React.FC = () => {
                   type="checkbox" 
                   id="enhance-toggle"
                   className="sr-only peer" 
-                  checked={isAdvancedOpen && currentSettings.enhance}
+                  checked={currentSettings.enhance}
                   onChange={(e) => {
                     const isEnhanceEnabled = e.target.checked;
                     updateSettings({ enhance: isEnhanceEnabled });
@@ -162,10 +162,7 @@ const UpscaleOptions: React.FC = () => {
               />
             </button>
             
-            <div className={`
-              mt-3 transition-all duration-300 overflow-hidden
-              ${isAdvancedOpen ? 'max-h-56 opacity-100' : 'max-h-0 opacity-0'} {/* Adjusted max-h after moving toggle */}
-            `}>
+            <div className={`mt-3 transition-all duration-300 overflow-hidden ${isAdvancedOpen ? 'max-h-56 opacity-100' : 'max-h-0 opacity-0'}`}>
               <div className="mb-4">
                 <div className="flex justify-between mb-1">
                   <label className="text-sm font-medium text-venice-dark-olive">

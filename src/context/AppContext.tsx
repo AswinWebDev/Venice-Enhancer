@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ImageFile, HistoryItem, EnhanceSettings, ScaleOption } from '../types';
+import { ImageFile, HistoryItem, EnhanceSettings, ScaleOption, BottomPanelView } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper function to convert File to base64 string (without data:image/... prefix for upscale API)
@@ -52,7 +52,7 @@ interface AppContextType {
   apiErrorNotification: string | null;
   isComparisonModalOpen: boolean;
   comparisonImages: { original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null;
-  isHistoryPanelOpen: boolean;
+  activeBottomPanelView: BottomPanelView;
 
   // State Setters & Functions
   setSuccessNotification: (message: string | null) => void;
@@ -70,12 +70,12 @@ interface AppContextType {
   generatePromptFromImage: (imageToAnalyze: ImageFile) => Promise<void>; // Kept for now, though primarily internal
   openComparisonModal: (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => void;
   closeComparisonModal: () => void;
-  toggleHistoryPanel: () => void;
+  setActiveBottomPanelView: (view: BottomPanelView) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }: { children: ReactNode }) => {
+export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
   // const [settings, setSettings] = useState<EnhanceSettings>({ // Removed for per-image settings
@@ -97,7 +97,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [promptQueue, setPromptQueue] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isScanningModalOpen, setIsScanningModalOpen] = useState(false);
-  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); // This will be derived or removed
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); // Manages the lock for sequential prompt generation
   const [activePromptGenerations, setActivePromptGenerations] = useState(0);
   const [scanningImageName, setScanningImageName] = useState<string | null>(null);
   const [scanningImageUrl, setScanningImageUrl] = useState<string | null>(null); 
@@ -105,8 +105,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [successNotification, setSuccessNotification] = useState<string | null>(null); 
   const [apiErrorNotification, setApiErrorNotification] = useState<string | null>(null); 
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false); 
-  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null>(null); 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
+  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null>(null);
+  const [activeBottomPanelView, setActiveBottomPanelViewState] = useState<BottomPanelView>('closed');
+
+  // --- Utility and Core Logic Functions ---
+
 
   // useEffect(() => { // Commented out: History will be per-image and localStorage logic needs rework
   //   const savedHistory = localStorage.getItem('venice-history');
@@ -150,6 +153,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [apiErrorNotification]);
 
+  // --- Image Management Functions ---
   const addImages = async (files: File[]) => {
     setIsScanningModalOpen(true);
     const newImagesToAdd: ImageFile[] = [];
@@ -232,7 +236,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setImages(prevImages => {
       imageToRevokePreview = prevImages.find(img => img.id === id);
       const remainingImages = prevImages.filter(img => img.id !== id);
-      
       if (selectedImageId === id) {
         if (remainingImages.length > 0) {
           newSelectedImageIdAfterRemove = remainingImages[0].id;
@@ -253,6 +256,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       if (imageToRevokePreview.enhanced) { // Also revoke enhanced if it exists
         URL.revokeObjectURL(imageToRevokePreview.enhanced);
       }
+      // Revoke all history item URLs for the removed image
+      if (imageToRevokePreview.history && imageToRevokePreview.history.length > 0) {
+        imageToRevokePreview.history.forEach(historyItem => {
+          URL.revokeObjectURL(historyItem.enhancedUrl);
+        });
+      }
     }
 
     // If a new image was selected as a result of deletion, check if it needs a prompt
@@ -264,9 +273,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // However, for queueing, adding the ID is sufficient if processPromptQueue correctly finds it.
       const newlySelectedImage = images.find(img => img.id === newSelectedImageIdAfterRemove);
       if (newlySelectedImage && (newlySelectedImage.status === 'idle' || (newlySelectedImage.status !== 'scanning' && !newlySelectedImage.settings.prompt))) {
-        setPromptQueue(prevQueue => {
-          const filteredQueue = prevQueue.filter(queuedId => queuedId !== newlySelectedImage.id);
-          return [newlySelectedImage.id, ...filteredQueue];
+        setPromptQueue((prevQueue: string[]) => {
+          const filteredQueue = prevQueue.filter((queuedId: string) => queuedId !== newlySelectedImage.id);
+          // Add to front of queue, ensuring no duplicates if it was already there (filteredQueue handles this)
+          return [newlySelectedImage.id, ...filteredQueue]; 
         });
       }
     }
@@ -281,9 +291,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       // We might want to clear the global prompt or trigger generation for the newly selected one.
       // For now, let's clear the global prompt and trigger generation if it's 'idle'.
       if (image.status === 'idle' || (image.status !== 'scanning' && !image.settings.prompt)) {
-        setPromptQueue(prevQueue => {
-          const filteredQueue = prevQueue.filter(queuedId => queuedId !== image.id);
-          return [image.id, ...filteredQueue];
+        setPromptQueue((prevQueue: string[]) => {
+          const filteredQueue = prevQueue.filter((queuedId: string) => queuedId !== image.id);
+          // Add to front of queue, ensuring no duplicates
+          return [image.id, ...filteredQueue]; 
         });
       }
       // If the image already has a prompt (e.g. loaded from history or previously generated and stored on ImageFile object)
@@ -409,10 +420,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setImages(prev =>
           prev.map(img => {
             if (img.id === selectedImageId) {
-              // Revoke old enhanced image URL if it exists, before assigning new one
-              if (img.enhanced) {
-                URL.revokeObjectURL(img.enhanced);
-              }
+              // const oldEnhancedUrl = img.enhanced; // Keep for potential later, more granular revocation if needed
+
               const newHistoryItem: HistoryItem = {
                 id: uuidv4(),
                 timestamp: Date.now(),
@@ -473,6 +482,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     images.forEach(img => {
       URL.revokeObjectURL(img.preview); // Changed back from url to preview
       if (img.enhanced) URL.revokeObjectURL(img.enhanced);
+      // Revoke all history item URLs for each image being cleared
+      if (img.history && img.history.length > 0) {
+        img.history.forEach(historyItem => {
+          URL.revokeObjectURL(historyItem.enhancedUrl);
+        });
+      }
     });
     setImages([]);
     setSelectedImageId(null);
@@ -579,7 +594,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         if (img.id === imageToAnalyze.id) {
           return {
             ...img,
-            settings: { ...img.settings, prompt: description },
+            settings: { ...img.settings, prompt: description, enhance: true },
             status: 'idle' as const, // Ensure status is of the correct literal type
             error: undefined
           };
@@ -618,17 +633,23 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (isGeneratingPrompt || promptQueue.length === 0) {
       return;
     }
-
     const nextImageId = promptQueue[0];
     const imageToProcess = images.find(img => img.id === nextImageId);
 
     if (imageToProcess) {
-      setIsGeneratingPrompt(true); 
-      setPromptQueue(prevQueue => prevQueue.slice(1));
-      await generatePromptFromImage(imageToProcess);
+      setIsGeneratingPrompt(true); // Lock for this generation
+      setPromptQueue((prevQueue: string[]) => prevQueue.slice(1));
+      try {
+        await generatePromptFromImage(imageToProcess);
+      } finally {
+        setIsGeneratingPrompt(false); // Unlock after this specific generation is done, regardless of success/failure
+      }
     } else {
       console.warn(`[processPromptQueue] Image with ID ${nextImageId} not found. Removing from queue.`);
-      setPromptQueue(prevQueue => prevQueue.filter(id => id !== nextImageId));
+      setPromptQueue((prevQueue: string[]) => prevQueue.filter((id: string) => id !== nextImageId));
+      if (promptQueue.length === 0) {
+         setIsGeneratingPrompt(false); // Ensure it's false if queue becomes empty
+      }
     }
   };
 
@@ -642,37 +663,55 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setComparisonImages(null);
   };
 
-  const toggleHistoryPanel = () => {
-    setIsHistoryPanelOpen(prev => !prev);
+  const setActiveBottomPanelView = (view: BottomPanelView) => {
+    setActiveBottomPanelViewState((currentView: BottomPanelView) => {
+      return currentView === view ? 'closed' : view;
+    });
   };
 
-  // useEffect to process the prompt queue
   useEffect(() => {
+    if (successNotification) {
+      const timer = setTimeout(() => {
+        setSuccessNotification(null);
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successNotification]);
+
+  useEffect(() => {
+    if (apiErrorNotification) {
+      const timer = setTimeout(() => {
+        setApiErrorNotification(null);
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [apiErrorNotification]);
+
+  useEffect(() => {
+    // Process the prompt queue
     if (!isGeneratingPrompt && promptQueue.length > 0) {
       processPromptQueue();
     }
-  }, [isGeneratingPrompt, promptQueue, images, generatePromptFromImage]);
+  }, [isGeneratingPrompt, promptQueue, images, processPromptQueue]);
 
   return (
     <AppContext.Provider
       value={{
         images,
         selectedImageId,
-        // history, // Removed
-        // settings, // Removed
         isAdvancedOpen,
         isSidebarOpen,
         isScanningModalOpen,
         isGeneratingPrompt: activePromptGenerations > 0, // Derived state
         scanningImageName,
         scanningImageUrl,
-        successNotification, 
-        apiErrorNotification, 
-        isComparisonModalOpen, 
-        comparisonImages, 
-        isHistoryPanelOpen,
-        setSuccessNotification, 
-        setApiErrorNotification, 
+        successNotification,
+        apiErrorNotification,
+        isComparisonModalOpen,
+        comparisonImages,
+        activeBottomPanelView, // Added
+        setSuccessNotification,
+        setApiErrorNotification,
         addImages,
         removeImage,
         selectImage,
@@ -680,13 +719,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setScale,
         toggleAdvanced,
         toggleSidebar,
-        closeScanningModal, // Review if this manual close is still needed
+        closeScanningModal,
         enhanceImages,
         clearImages,
-        generatePromptFromImage, // Internal, but exposed for now
-        openComparisonModal, 
+        generatePromptFromImage, // Still exposed, might be for direct calls or testing
+        openComparisonModal,
         closeComparisonModal,
-        toggleHistoryPanel,
+        setActiveBottomPanelView, // Added
       }}
     >
       {children}

@@ -6,9 +6,7 @@ import UpscaleOptions from './components/UpscaleOptions';
 import SuccessNotification from './components/SuccessNotification.tsx';
 import ErrorNotification from './components/ErrorNotification';
 import ComparisonModal from './components/ComparisonModal.tsx';
-import { EnhanceSettings } from './types';
 import ThumbnailBar from './components/ThumbnailBar';
-import HistoryPanel from './components/HistoryPanel';
 
 function AppContent() {
   const { 
@@ -19,32 +17,9 @@ function AppContent() {
     setApiErrorNotification,
     isComparisonModalOpen,
     closeComparisonModal,
-    comparisonImages,
-    isHistoryPanelOpen,
-    toggleHistoryPanel,
-    selectedImageId,
-    updateSettings, // For applying history settings
-    openComparisonModal // For previewing history items
+    comparisonImages
   } = useApp();
   
-  const selectedImage = images.find(img => img.id === selectedImageId);
-
-  const handleApplyHistoryItem = (settings: EnhanceSettings) => {
-    if (selectedImage) {
-      updateSettings(settings); // This updates the settings for the currently selected image
-      // Optionally, you might want to immediately re-trigger enhancement or inform the user to click enhance.
-      // For now, just updating settings. User can click enhance button if they wish.
-      // enhanceImages([selectedImage.id], settings.scale); 
-      // toggleHistoryPanel(); // Close panel after applying
-    }
-  };
-
-  const handlePreviewHistoryItem = (enhancedUrl: string, originalUrl: string, operationType: 'enhanced' | 'upscaled') => {
-    if (selectedImage) {
-      openComparisonModal(originalUrl, enhancedUrl, operationType);
-      // toggleHistoryPanel(); // Optionally close panel after opening comparison
-    }
-  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -115,17 +90,6 @@ function AppContent() {
         />
       )}
       <ThumbnailBar />
-      {selectedImage && (
-        <HistoryPanel 
-          history={selectedImage.history}
-          onApplyHistoryItem={handleApplyHistoryItem}
-          onPreviewHistoryItem={handlePreviewHistoryItem}
-          isVisible={isHistoryPanelOpen}
-          toggleVisibility={toggleHistoryPanel}
-          imageName={selectedImage.name}
-          originalPreviewUrl={selectedImage.preview} // Pass the original preview URL of the selected image
-        />
-      )}
     </div>
   );
 }

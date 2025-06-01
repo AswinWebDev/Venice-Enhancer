@@ -30,3 +30,5 @@ export interface EnhanceSettings {
 }
 
 export type ScaleOption = '1x' | '2x' | '4x';
+
+export type BottomPanelView = 'thumbnails' | 'history' | 'closed';
