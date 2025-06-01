@@ -7,6 +7,9 @@ export default {
         sans: ['"Markazi Text"', 'serif'],
         cursive: ['"Mea Culpa"', 'cursive'],
       },
+      screens: {
+        'xs': '380px',
+      },
       colors: {
         'venice-red': '#ff3333',
         'venice-light': '#ff4d4d',

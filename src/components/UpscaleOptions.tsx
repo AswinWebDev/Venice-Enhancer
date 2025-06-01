@@ -19,9 +19,9 @@ const UpscaleOptions: React.FC = () => {
   } = useApp();
   
   const scaleOptions: { value: ScaleOption; label: string }[] = [
-    { value: '1x', label: '1× Original' },
-    { value: '2x', label: '2× Upscale' },
-    { value: '4x', label: '4× Max' }
+    { value: '1x', label: '1×' },
+    { value: '2x', label: '2×' },
+    { value: '4x', label: 'Max' }
   ];
   
   const hasSelectedImage = images.length > 0 && selectedImageId;
@@ -36,6 +36,36 @@ const UpscaleOptions: React.FC = () => {
         </h3> */}
         
         <div className={`${isGeneratingPrompt ? 'opacity-50 pointer-events-none' : ''}`}> {/* NEW PARENT DIV for disabling logic */}
+
+        <div className='mb-6'>
+            <label className="block text-sm font-medium text-venice-dark-olive mb-2">
+              <div className="flex items-center">
+                Scale
+                <Tooltip text="The scale of the image to upscale. 2x is the default and recommended. 4x is the maximum scale.">
+                  <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
+                </Tooltip>
+              </div>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {scaleOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`
+                    py-2.5 px-4 rounded-md text-sm font-medium transition-all
+                    ${settings.scale === option.value 
+                      ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
+                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'}
+                    ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                  onClick={() => setScale(option.value)}
+                  disabled={!settings.enhance && option.value === '1x'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Enhance Image Toggle Section (MOVED HERE) */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
@@ -110,35 +140,7 @@ const UpscaleOptions: React.FC = () => {
               </div>
             )}
 
-          <div>
-            <label className="block text-sm font-medium text-venice-dark-olive mb-2">
-              <div className="flex items-center">
-                Scale
-                <Tooltip text="The scale of the image to upscale. 2x is the default and recommended. 4x is the maximum scale.">
-                  <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
-                </Tooltip>
-              </div>
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              {scaleOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`
-                    py-2.5 px-4 rounded-md text-sm font-medium transition-all
-                    ${settings.scale === option.value 
-                      ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
-                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'}
-                    ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                  onClick={() => setScale(option.value)}
-                  disabled={!settings.enhance && option.value === '1x'}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      
           
           <div>
             <button
@@ -223,64 +225,66 @@ const UpscaleOptions: React.FC = () => {
           
 
           
-          <div className="mt-6">
+          {/* Buttons Row */}
+          <div className="mt-8 flex flex-col items-center space-y-3 xs:flex-row xs:items-stretch xs:justify-center xs:space-x-3 xs:space-y-0">
             <button
               type="button"
               onClick={() => { 
                 updateSettings({ 
                   prompt: '', 
-                  creativity: 0.35, // Default updated
-                  adherence: 0.35,  // Default updated
+                  creativity: 0.35,
+                  adherence: 0.35,
                   scale: '2x', 
                   enhance: true 
                 });
               }}
-              className="w-full py-2.5 px-4 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors"
+              className="w-4/5 xs:w-auto py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
+              disabled={isGeneratingPrompt} 
+              style={{minWidth: '30%'}}
             >
               Reset to Defaults
             </button>
+            <button
+              type="button"
+              className={`
+               w-4/5 xs:w-auto py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
+                ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
+                  ? 'bg-venice-stone/70 cursor-not-allowed'
+                  : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
+              `}
+              style={{minWidth: '45%'}}
+              onClick={enhanceImages}
+              disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" /> {/* Adjusted icon size */}
+                  Enhancing...
+                </>
+              ) : isGeneratingPrompt ? (
+                <>
+                  <Loader2 size={18} className="animate-spin mr-2" /> {/* Adjusted icon size */}
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Wand2 size={18} className="mr-1.5" /> {/* Adjusted icon size */}
+                  {(() => {
+                    const scaleLabel = settings.scale === '1x' ? 'Original' : settings.scale === '2x' ? '2x' : 'Max';
+                    if (settings.enhance) {
+                      return `Enhance ${scaleLabel}`;
+                    }
+                    if (settings.scale === '1x') {
+                      return `Upscale Original`;
+                    }
+                    return `Upscale ${scaleLabel}`;
+                  })()}
+                </>
+              )}
+            </button>
           </div>
           </div> {/* Closing new parent div for opacity logic */}
-        </div> 
-
-        <button
-          type="button"
-          className={`
-            w-full py-3.5 px-4 mt-8 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-base
-            ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
-              ? 'bg-venice-stone/70 cursor-not-allowed'
-              : 'bg-venice-bright-red hover:bg-d94f38 shadow-lg hover:shadow-xl transform hover:scale-105'}
-          `}
-          onClick={enhanceImages}
-          disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
-        >
-          {isProcessing ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2.5"></div>
-              Enhancing... (~1 min)
-            </>
-          ) : isGeneratingPrompt ? (
-            <>
-              <Loader2 size={20} className="animate-spin mr-2.5" />
-              Analyzing...
-            </>
-          ) : (
-            <>
-              <Wand2 size={20} className="mr-2" />
-              {(() => {
-                const scaleLabel = settings.scale === '1x' ? 'Original' : settings.scale === '2x' ? '2x' : 'Max';
-                if (settings.enhance) {
-                  return `Enhance ${scaleLabel}`;
-                }
-                // Enhance is OFF
-                if (settings.scale === '1x') {
-                  return `Upscale Original`; // Text changed, disabled state handled by button's disabled prop
-                }
-                return `Upscale ${scaleLabel}`;
-              })()}
-            </>
-          )}
-        </button>
+        </div>
       </div>
     </div>
   );
