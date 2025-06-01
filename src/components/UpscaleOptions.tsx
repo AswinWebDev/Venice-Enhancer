@@ -31,9 +31,9 @@ const UpscaleOptions: React.FC = () => {
   return (
     <div className="w-full">
       <div className="bg-venice-white rounded-lg p-6 shadow-lg border border-venice-beige">
-        <h3 className="text-xl font-semibold text-venice-olive-brown mb-6">
+        {/* <h3 className="text-xl font-semibold text-venice-olive-brown mb-6">
           Enhancement Settings
-        </h3>
+        </h3> */}
         
         <div className={`${isGeneratingPrompt ? 'opacity-50 pointer-events-none' : ''}`}> {/* NEW PARENT DIV for disabling logic */}
           {/* Enhance Image Toggle Section (MOVED HERE) */}
