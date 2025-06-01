@@ -226,7 +226,7 @@ const UpscaleOptions: React.FC = () => {
 
           
           {/* Buttons Row */}
-          <div className="mt-8 flex items-stretch space-x-3 justify-center">
+          <div className="mt-8 flex flex-col items-center space-y-3 xs:flex-row xs:items-stretch xs:justify-center xs:space-x-3 xs:space-y-0">
             <button
               type="button"
               onClick={() => { 
@@ -238,7 +238,7 @@ const UpscaleOptions: React.FC = () => {
                   enhance: true 
                 });
               }}
-              className="py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
+              className="w-4/5 xs:w-auto py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
               disabled={isGeneratingPrompt} 
               style={{minWidth: '30%'}}
             >
@@ -247,7 +247,7 @@ const UpscaleOptions: React.FC = () => {
             <button
               type="button"
               className={`
-               py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
+               w-4/5 xs:w-auto py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
                 ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
                   ? 'bg-venice-stone/70 cursor-not-allowed'
                   : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
