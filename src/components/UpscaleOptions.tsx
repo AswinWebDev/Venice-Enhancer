@@ -1,12 +1,11 @@
 import React from 'react';
 import { ChevronDown, Wand2, Info, X, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { ScaleOption } from '../types';
+import { ScaleOption, EnhanceSettings } from '../types';
 import Tooltip from './Tooltip';
 
 const UpscaleOptions: React.FC = () => {
-  const { 
-    settings, 
+  const {
     setScale, 
     toggleAdvanced, 
     isAdvancedOpen, 
@@ -14,9 +13,21 @@ const UpscaleOptions: React.FC = () => {
     enhanceImages,
     images,
     selectedImageId,
-    isGeneratingPrompt,
-    promptGenerationError
+    isGeneratingPrompt // Global flag for any prompt generation activity
+    // settings and promptGenerationError are now per-image
   } = useApp();
+
+  const FALLBACK_SETTINGS: EnhanceSettings = {
+    scale: '2x',
+    enhance: true,
+    creativity: 0.35,
+    adherence: 0.35,
+    prompt: "",
+  };
+
+  const selectedImage = images.find(img => img.id === selectedImageId);
+  const currentSettings = selectedImage?.settings || FALLBACK_SETTINGS;
+  const currentPromptError = selectedImage?.status === 'error' && selectedImage?.error ? selectedImage.error : null;
   
   const scaleOptions: { value: ScaleOption; label: string }[] = [
     { value: '1x', label: '1×' },
@@ -25,7 +36,6 @@ const UpscaleOptions: React.FC = () => {
   ];
   
   const hasSelectedImage = images.length > 0 && selectedImageId;
-  const selectedImage = images.find(img => img.id === selectedImageId);
   const isProcessing = selectedImage?.status === 'processing';
 
   return (
@@ -53,13 +63,13 @@ const UpscaleOptions: React.FC = () => {
                   type="button"
                   className={`
                     py-2.5 px-4 rounded-md text-sm font-medium transition-all
-                    ${settings.scale === option.value 
+                    ${currentSettings.scale === option.value 
                       ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
                       : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'}
-                    ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
+                    ${!currentSettings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
                   `}
                   onClick={() => setScale(option.value)}
-                  disabled={!settings.enhance && option.value === '1x'}
+                  disabled={!currentSettings.enhance && option.value === '1x'}
                 >
                   {option.label}
                 </button>
@@ -82,7 +92,7 @@ const UpscaleOptions: React.FC = () => {
                   type="checkbox" 
                   id="enhance-toggle"
                   className="sr-only peer" 
-                  checked={settings.enhance}
+                  checked={isAdvancedOpen && currentSettings.enhance}
                   onChange={(e) => {
                     const isEnhanceEnabled = e.target.checked;
                     updateSettings({ enhance: isEnhanceEnabled });
@@ -96,7 +106,7 @@ const UpscaleOptions: React.FC = () => {
           {/* Original settings div, now only with space-y-6 */}
           <div className="space-y-6">
             {/* Prompt Section - Conditionally Rendered */}
-            {settings.enhance && (
+            {currentSettings.enhance && (
               <div>
                 <label className="block text-sm font-medium text-venice-dark-olive mb-1.5">
                   <div className="flex items-center">
@@ -108,34 +118,31 @@ const UpscaleOptions: React.FC = () => {
                 </label>
                 <div className="relative">
                   <textarea
+                    id="prompt"
                     rows={3}
-                    className={`block w-full p-3 text-sm rounded-lg text-venice-deep-olive border border-venice-stone/60 focus:outline-none focus:border-venice-stone/60 placeholder-venice-stone focus:ring-2 focus:ring-venice-red/50 duration-150 ease-in-out ${isGeneratingPrompt ? 'bg-venice-beige/50 cursor-wait' : 'bg-venice-eggshell'}`}
-                    placeholder={isGeneratingPrompt ? "Analyzing image, please wait..." : "Describe desired style or changes..."}
-                    value={settings.prompt || ''}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-venice-red focus:ring-venice-red sm:text-sm p-3 resize-none placeholder-gray-400 ${selectedImage?.status === 'scanning' || isGeneratingPrompt ? 'bg-gray-100 cursor-wait' : 'bg-white'}`}
+                    placeholder={selectedImage?.status === 'scanning' || isGeneratingPrompt ? "Analyzing image and generating prompt..." : "Describe your desired style or leave blank for auto-magic..."}
+                    value={currentSettings.prompt || ''}
                     onChange={(e) => updateSettings({ prompt: e.target.value })}
-                    disabled={isGeneratingPrompt}
-                    style={{ fontSize: '100%' }}
+                    disabled={selectedImage?.status === 'scanning' || isGeneratingPrompt || !hasSelectedImage}
                   />
-                  {isGeneratingPrompt && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/70 rounded-md">
+                  {(selectedImage?.status === 'scanning' || isGeneratingPrompt) && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/50">
                       <Loader2 size={24} className="animate-spin text-venice-red" />
                     </div>
                   )}
-                  {!isGeneratingPrompt && settings.prompt && (
-                    <button
-                      type="button"
+                  {currentSettings.prompt && !(selectedImage?.status === 'scanning' || isGeneratingPrompt) && (
+                    <button 
                       onClick={() => updateSettings({ prompt: '' })}
-                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 p-1 bg-white rounded-full"
                       aria-label="Clear prompt"
                     >
-                      <X size={18} />
+                      <X size={16} />
                     </button>
                   )}
                 </div>
-                {promptGenerationError && (
-                  <p className="mt-1.5 text-xs text-red-600">
-                    Error generating prompt: {promptGenerationError}
-                  </p>
+                {currentPromptError && (
+                  <p className="mt-2 text-sm text-red-600">{currentPromptError}</p>
                 )}
               </div>
             )}
@@ -170,7 +177,7 @@ const UpscaleOptions: React.FC = () => {
                     </div>
                   </label>
                   <span className="text-sm text-venice-olive-brown">
-                    {settings.creativity.toFixed(2)} {/* Show two decimal places for 0.05 step */}
+                    {currentSettings.creativity.toFixed(2)}
                   </span>
                 </div>
                 <input
@@ -178,8 +185,8 @@ const UpscaleOptions: React.FC = () => {
                   min="0"
                   max="1"
                   step="0.05" // Step updated
-                  value={settings.creativity} // Value is managed by AppContext
-                  disabled={!settings.enhance || isGeneratingPrompt} // Disabled when enhance is off or generating prompt
+                  value={currentSettings.creativity}
+                  disabled={!currentSettings.enhance || isGeneratingPrompt} // Creativity only disabled during prompt generation OR if enhance is off
                   onChange={(e) => updateSettings({ creativity: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
@@ -200,7 +207,7 @@ const UpscaleOptions: React.FC = () => {
                     </div>
                   </label>
                   <span className="text-sm text-venice-olive-brown">
-                    {settings.adherence.toFixed(2)} {/* Show two decimal places for 0.05 step */}
+                    {currentSettings.adherence.toFixed(2)}
                   </span>
                 </div>
                 <input
@@ -208,8 +215,8 @@ const UpscaleOptions: React.FC = () => {
                   min="0"
                   max="1"
                   step="0.05" // Step updated
-                  value={settings.adherence}
-                  disabled={isGeneratingPrompt} // Adherence only disabled during prompt generation
+                  value={currentSettings.adherence}
+                  disabled={isGeneratingPrompt || !hasSelectedImage} // Adherence disabled during prompt generation or if no image selected
                   onChange={(e) => updateSettings({ adherence: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
@@ -248,13 +255,17 @@ const UpscaleOptions: React.FC = () => {
               type="button"
               className={`
                w-4/5 xs:w-auto py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
-                ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x'))
+                ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x'))
                   ? 'bg-venice-stone/70 cursor-not-allowed'
                   : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
               `}
               style={{minWidth: '45%'}}
-              onClick={enhanceImages}
-              disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!settings.enhance && settings.scale === '1x')}
+              onClick={() => {
+                if (selectedImage && selectedImage.id && currentSettings) {
+                  enhanceImages([selectedImage.id], currentSettings.scale);
+                }
+              }}
+              disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x')}
             >
               {isProcessing ? (
                 <>
@@ -270,11 +281,11 @@ const UpscaleOptions: React.FC = () => {
                 <>
                   <Wand2 size={18} className="mr-1.5" /> {/* Adjusted icon size */}
                   {(() => {
-                    const scaleLabel = settings.scale === '1x' ? 'Original' : settings.scale === '2x' ? '2x' : 'Max';
-                    if (settings.enhance) {
+                    const scaleLabel = currentSettings.scale === '1x' ? 'Original' : currentSettings.scale === '2x' ? '2x' : 'Max';
+                    if (currentSettings.enhance) {
                       return `Enhance ${scaleLabel}`;
                     }
-                    if (settings.scale === '1x') {
+                    if (currentSettings.scale === '1x') {
                       return `Upscale Original`;
                     }
                     return `Upscale ${scaleLabel}`;

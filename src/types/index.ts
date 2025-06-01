@@ -1,4 +1,6 @@
 export interface ImageFile {
+  settings: EnhanceSettings;
+  history: HistoryItem[];
   id: string;
   file: File; // Original file object, might not be needed long-term if preview is generated
   name: string; // Added to store the original file name
@@ -12,11 +14,11 @@ export interface ImageFile {
 }
 
 export interface HistoryItem {
-  id: string;
-  originalImage: string;
-  enhancedImage: string;
-  settings: EnhanceSettings;
+  id: string; // Unique ID for this history entry
   timestamp: number;
+  settingsUsed: EnhanceSettings; // Snapshot of settings used for this specific enhancement
+  enhancedUrl: string; // URL of the resulting enhanced image
+  operationType: 'enhanced' | 'upscaled'; // Type of operation performed
 }
 
 export interface EnhanceSettings {
