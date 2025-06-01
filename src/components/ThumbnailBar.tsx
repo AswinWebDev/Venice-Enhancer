@@ -20,42 +20,52 @@ const ThumbnailBar: React.FC = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center justify-end pointer-events-none">
-      {/* Main Animated Container - This entire block changes height */}
+      {/* Main Animated Container - Controls overall height and positioning */}
       <div
-        className={`pointer-events-auto transition-all duration-300 ease-in-out w-full max-w-screen-lg 
-                    bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-2xl rounded-t-[2rem] /* Increased rounding, e.g., 32px */ border-x border-t border-white/25 dark:border-slate-700/25
-                    overflow-hidden 
+        className={`pointer-events-auto transition-all duration-300 ease-in-out w-full 
+                    overflow-visible /* Allow children to overflow for different widths/shadows */ 
                     ${activeBottomPanelView !== 'closed' ? openPanelMaxHeight : closedPanelMaxHeight}`}
       >
-        {/* Button Strip - Always at the TOP of the main animated container */}
-        <div className={`flex justify-center ${buttonStripHeightClass} /* Parent provides top rounding and border */`}>
-          <button
-            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
-            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
-            aria-label="Show thumbnails"
-            title="Show thumbnails"
+        {/* Wrapper for Centered Button Strip */}
+        <div className="w-full flex justify-center">
+          {/* Actual Button Strip - Narrower, Rounded Top, Glassmorphic */}
+          <div
+            className={`flex justify-center ${buttonStripHeightClass} w-full max-w-md /* Narrower width */
+                        bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-2xl rounded-t-[2rem] 
+                        border-x border-t border-white/25 dark:border-slate-700/25 overflow-hidden relative z-10`}
           >
-            <Images size={16} className="mr-2" />
-            Thumbnails
-          </button>
-          <div className="w-px bg-white/30 dark:bg-slate-700/30"></div> {/* Vertical separator */}
-          <button
-            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
-            disabled={!selectedImageId}
-            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label="Show history"
-            title="Show history"
-          >
-            <History size={16} className="mr-2" />
-            History
-          </button>
+            <button
+              onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
+              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
+              aria-label="Show thumbnails"
+              title="Show thumbnails"
+            >
+              <Images size={16} className="mr-2" />
+              Thumbnails
+            </button>
+            <div className="w-px bg-white/30 dark:bg-slate-700/30"></div> {/* Vertical separator */}
+            <button
+              onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
+              disabled={!selectedImageId}
+              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              aria-label="Show history"
+              title="Show history"
+            >
+              <History size={16} className="mr-2" />
+              History
+            </button>
+          </div>
         </div>
 
-        {/* Content Area - Appears/disappears BELOW the button strip */}
+        {/* Content Area - Wider, Appears/disappears BELOW the button strip */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden border-t border-white/25 dark:border-slate-700/25
-                      bg-white/10 dark:bg-slate-800/10 /* Subtle distinct background for content area */
-                      ${activeBottomPanelView !== 'closed' ? `${contentAreaTargetHeightClass} opacity-100 p-2` : 'max-h-0 opacity-0 p-0'}`}
+          className={`transition-all duration-300 ease-in-out overflow-hidden w-full 
+                      bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-lg /* Glassmorphic */
+                      /* No top rounding, should feel like it's under the button strip */
+                      /* The connection point is tricky. Button strip has bottom edge. Content area has top edge. */
+                      /* We want them to look like one surface. */
+                      mt-[-1px] /* Attempt to pull up to meet button strip bottom */
+                      ${activeBottomPanelView !== 'closed' ? `${contentAreaTargetHeightClass} opacity-100 p-2 border-x border-b border-white/25 dark:border-slate-700/25` : 'max-h-0 opacity-0 p-0'}`}
         >
           <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent">
             {activeBottomPanelView === 'thumbnails' && (
