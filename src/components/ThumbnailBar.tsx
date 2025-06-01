@@ -12,11 +12,9 @@ const ThumbnailBar: React.FC = () => {
     return null;
   }
 
-  // Define heights for clarity
-  const buttonStripHeightClass = 'h-12'; // Approx 3rem (buttons have py-3)
-  const contentAreaHeightClass = 'h-[12rem]'; // 12rem for content
-  
-  // Max heights for the main animated container
+  const buttonStripHeightClass = 'h-12'; // Approx 3rem
+  const contentAreaTargetHeightClass = 'h-[12rem]'; // 12rem for content when open
+
   const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
   const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
 
@@ -29,10 +27,34 @@ const ThumbnailBar: React.FC = () => {
                     overflow-hidden 
                     ${activeBottomPanelView !== 'closed' ? openPanelMaxHeight : closedPanelMaxHeight}`}
       >
-        {/* Content Area - Appears/disappears within the main container */}
+        {/* Button Strip - Always at the TOP of the main animated container */}
+        <div className={`flex justify-center ${buttonStripHeightClass} /* No top border here, parent has it */`}>
+          <button
+            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
+            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
+            aria-label="Show thumbnails"
+            title="Show thumbnails"
+          >
+            <Images size={16} className="mr-2" />
+            Thumbnails
+          </button>
+          <div className="w-px bg-white/30 dark:bg-slate-700/30"></div> {/* Vertical separator */}
+          <button
+            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
+            disabled={!selectedImageId}
+            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
+            aria-label="Show history"
+            title="Show history"
+          >
+            <History size={16} className="mr-2" />
+            History
+          </button>
+        </div>
+
+        {/* Content Area - Appears/disappears BELOW the button strip */}
         <div
-          className={`transition-all duration-300 ease-in-out overflow-hidden 
-                      ${activeBottomPanelView !== 'closed' ? `${contentAreaHeightClass} opacity-100 p-2` : 'max-h-0 opacity-0 p-0'}`}
+          className={`transition-all duration-300 ease-in-out overflow-hidden border-t border-white/20 dark:border-slate-700/20
+                      ${activeBottomPanelView !== 'closed' ? `${contentAreaTargetHeightClass} opacity-100 p-2` : 'max-h-0 opacity-0 p-0'}`}
         >
           <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent">
             {activeBottomPanelView === 'thumbnails' && (
@@ -54,30 +76,6 @@ const ThumbnailBar: React.FC = () => {
               <CompactHistoryView selectedImage={selectedImage} />
             )}
           </div>
-        </div>
-
-        {/* Button Strip - Always at the bottom of the main animated container */}
-        <div className={`flex justify-center ${buttonStripHeightClass} border-t border-white/20 dark:border-slate-700/20`}>
-          <button
-            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
-            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
-            aria-label="Show thumbnails"
-            title="Show thumbnails"
-          >
-            <Images size={16} className="mr-2" />
-            Thumbnails
-          </button>
-          <div className="w-px bg-white/30 dark:bg-slate-700/30"></div> {/* Vertical separator */}
-          <button
-            onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
-            disabled={!selectedImageId}
-            className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label="Show history"
-            title="Show history"
-          >
-            <History size={16} className="mr-2" />
-            History
-          </button>
         </div>
       </div>
     </div>
