@@ -12,9 +12,10 @@ const UpscaleOptions: React.FC = () => {
     updateSettings,
     enhanceImages,
     images,
-    selectedImageId,
-    isGeneratingPrompt // Global flag for any prompt generation activity
+    selectedImageId
     // settings and promptGenerationError are now per-image
+    // isGeneratingPrompt (global flag) is no longer used here for disabling UI elements directly;
+    // we now use selectedImage.status to determine if the *selected* image is scanning.
   } = useApp();
 
   const FALLBACK_SETTINGS: EnhanceSettings = {
@@ -45,8 +46,7 @@ const UpscaleOptions: React.FC = () => {
         {/* <h3 className="text-xl font-semibold text-venice-olive-brown mb-6">
           Enhancement Settings
         </h3> */}
-        
-        <div className={`${isGeneratingPrompt ? 'opacity-50 pointer-events-none' : ''}`}> {/* NEW PARENT DIV for disabling logic */}
+
 
         <div className='mb-6'>
             <label className="block text-sm font-medium text-venice-dark-olive mb-2">
@@ -244,7 +244,7 @@ const UpscaleOptions: React.FC = () => {
                 });
               }}
               className="w-4/5 xs:w-auto py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
-              disabled={isGeneratingPrompt} 
+              disabled={isSelectedImageScanning || isProcessing || !hasSelectedImage} 
               style={{minWidth: '30%'}}
             >
               Reset to Defaults
@@ -253,7 +253,7 @@ const UpscaleOptions: React.FC = () => {
               type="button"
               className={`
                w-4/5 xs:w-auto py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
-                ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x'))
+                ${(!hasSelectedImage || isProcessing || isSelectedImageScanning || (!currentSettings.enhance && currentSettings.scale === '1x'))
                   ? 'bg-venice-stone/70 cursor-not-allowed'
                   : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
               `}
@@ -263,14 +263,14 @@ const UpscaleOptions: React.FC = () => {
                   enhanceImages([selectedImage.id], currentSettings.scale);
                 }
               }}
-              disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x')}
+              disabled={!hasSelectedImage || isProcessing || isSelectedImageScanning || (!currentSettings.enhance && currentSettings.scale === '1x')}
             >
               {isProcessing ? (
                 <>
                   <Loader2 size={18} className="animate-spin mr-2" /> {/* Adjusted icon size */}
                   Enhancing...
                 </>
-              ) : isGeneratingPrompt ? (
+              ) : isSelectedImageScanning ? (
                 <>
                   <Loader2 size={18} className="animate-spin mr-2" /> {/* Adjusted icon size */}
                   Analyzing...
@@ -292,7 +292,6 @@ const UpscaleOptions: React.FC = () => {
               )}
             </button>
           </div>
-          </div> {/* Closing new parent div for opacity logic */}
         </div>
       </div>
     </div>
