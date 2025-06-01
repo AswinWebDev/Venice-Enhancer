@@ -19,9 +19,9 @@ const UpscaleOptions: React.FC = () => {
   } = useApp();
   
   const scaleOptions: { value: ScaleOption; label: string }[] = [
-    { value: '1x', label: '1× Original' },
-    { value: '2x', label: '2× Upscale' },
-    { value: '4x', label: '4× Max' }
+    { value: '1x', label: '1×' },
+    { value: '2x', label: '2×' },
+    { value: '4x', label: '4×' }
   ];
   
   const hasSelectedImage = images.length > 0 && selectedImageId;
@@ -36,6 +36,36 @@ const UpscaleOptions: React.FC = () => {
         </h3> */}
         
         <div className={`${isGeneratingPrompt ? 'opacity-50 pointer-events-none' : ''}`}> {/* NEW PARENT DIV for disabling logic */}
+
+        <div className='mb-6'>
+            <label className="block text-sm font-medium text-venice-dark-olive mb-2">
+              <div className="flex items-center">
+                Scale
+                <Tooltip text="The scale of the image to upscale. 2x is the default and recommended. 4x is the maximum scale.">
+                  <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
+                </Tooltip>
+              </div>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {scaleOptions.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`
+                    py-2.5 px-4 rounded-md text-sm font-medium transition-all
+                    ${settings.scale === option.value 
+                      ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
+                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'}
+                    ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                  onClick={() => setScale(option.value)}
+                  disabled={!settings.enhance && option.value === '1x'}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           {/* Enhance Image Toggle Section (MOVED HERE) */}
           <div className="mb-6">
             <div className="flex items-center justify-between">
@@ -110,35 +140,7 @@ const UpscaleOptions: React.FC = () => {
               </div>
             )}
 
-          <div>
-            <label className="block text-sm font-medium text-venice-dark-olive mb-2">
-              <div className="flex items-center">
-                Scale
-                <Tooltip text="The scale of the image to upscale. 2x is the default and recommended. 4x is the maximum scale.">
-                  <Info size={14} className="ml-1.5 text-venice-stone cursor-help" />
-                </Tooltip>
-              </div>
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              {scaleOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`
-                    py-2.5 px-4 rounded-md text-sm font-medium transition-all
-                    ${settings.scale === option.value 
-                      ? 'bg-venice-red/10 text-venice-red border-2 border-venice-red'
-                      : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'}
-                    ${!settings.enhance && option.value === '1x' ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                  onClick={() => setScale(option.value)}
-                  disabled={!settings.enhance && option.value === '1x'}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      
           
           <div>
             <button
