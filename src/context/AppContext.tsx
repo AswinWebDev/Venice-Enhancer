@@ -66,7 +66,7 @@ interface AppContextType {
   toggleAdvanced: () => void;
   toggleSidebar: () => void;
   closeScanningModal: () => void; // This might be redundant if modal is purely controlled by activePromptGenerations
-  enhanceImages: (ids: string[], scale: ScaleOption) => Promise<void>; // Assuming enhanceImages is the correct name
+  enhanceImages: () => Promise<void>;
   clearImages: () => void;
   generatePromptFromImage: (imageToAnalyze: ImageFile) => Promise<void>; // Kept for now, though primarily internal
   openComparisonModal: (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => void;
@@ -348,6 +348,16 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
     setIsScanningModalOpen(false);
   };
 
+  const openComparisonModal = (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => {
+    setComparisonImages({ original: originalUrl, enhanced: enhancedUrl, operationType });
+    setIsComparisonModalOpen(true);
+  };
+
+  const closeComparisonModal = () => {
+    setIsComparisonModalOpen(false);
+    setComparisonImages(null);
+  };
+
   const enhanceImages = async () => {
     const apiKey = import.meta.env.VITE_VENICE_API_KEY;
 
@@ -556,55 +566,62 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
           },
           temperature: 0.7,
           max_tokens: 400,
-          stream: false,
-        }),
+        })
       };
 
       const response = await fetch(
-        "https://api.venice.ai/api/v1/chat/completions",
-        options
-      );
-      
-      console.log("[generatePromptFromImage] Fetch response status:", response.status, "for image ID:", imageToAnalyze.id);
-    
-      if (!response.ok) {
-        let errorMsg = `API Error: ${response.status}`;
-        try {
-            const errorData = await response.json();
+      "https://api.venice.ai/api/v1/chat/completions",
+      options
+    );
+
+    console.log("[generatePromptFromImage] Fetch response status:", response.status, "for image ID:", imageToAnalyze.id);
+
+    if (!response.ok) {
+      let errorMsg = `API Error: ${response.status}`;
+      try {
+          const errorData = await response.json();
+          // New specific error parsing:
+          if (errorData.issues && Array.isArray(errorData.issues) && errorData.issues.length > 0 && errorData.issues[0].message) {
+            errorMsg = errorData.issues[0].message;
+          } else if (errorData.details && errorData.details._size && errorData.details._size._errors && Array.isArray(errorData.details._size._errors) && errorData.details._size._errors.length > 0) {
+            errorMsg = errorData.details._size._errors[0];
+          } else {
+            // Original generic fallback
             errorMsg = errorData.message || errorData.detail || errorData.error || errorMsg;
-        } catch (e) {
-            errorMsg += ` - ${response.statusText}`;
-        }
-        throw new Error(errorMsg);
+          }
+      } catch (e) {
+          // If parsing errorData fails, append statusText
+          errorMsg += ` - ${response.statusText}`;
       }
+      throw new Error(errorMsg); // This will be caught by the main catch block for the try...catch
+    }
 
-      console.log("[generatePromptFromImage] API response OK for image ID:", imageToAnalyze.id);
+    // Success path
+    console.log("[generatePromptFromImage] API response OK for image ID:", imageToAnalyze.id);
+    const data = await response.json(); // Parse successful response
+    const content = data.choices[0]?.message?.content;
 
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content;
+    if (!content) {
+      console.error("[generatePromptFromImage] No content in API response for image ID:", imageToAnalyze.id);
+      throw new Error('No content in API response for prompt generation.');
+    }
+    console.log("[generatePromptFromImage] Content received from API for image ID:", imageToAnalyze.id);
+    
+    const promptMatch = content.match(/Prompt:\s*(.*)/is);
+    const description = promptMatch ? promptMatch[1].trim() : content.trim();
 
-      if (!content) {
-        console.error("[generatePromptFromImage] No content in API response for image ID:", imageToAnalyze.id);
-        throw new Error('No content in API response for prompt generation.');
+    setImages(prevImages => prevImages.map(img => {
+      if (img.id === imageToAnalyze.id) {
+        return {
+          ...img,
+          settings: { ...img.settings, prompt: description, enhance: true },
+          status: 'idle' as const, 
+          error: undefined
+        };
       }
-      console.log("[generatePromptFromImage] Content received from API for image ID:", imageToAnalyze.id);
-
-      const promptMatch = content.match(/Prompt:\s*(.*)/is);
-      
-      const description = promptMatch ? promptMatch[1].trim() : content.trim();
-
-      setImages(prevImages => prevImages.map(img => {
-        if (img.id === imageToAnalyze.id) {
-          return {
-            ...img,
-            settings: { ...img.settings, prompt: description, enhance: true },
-            status: 'idle' as const, // Ensure status is of the correct literal type
-            error: undefined
-          };
-        }
-        return img;
-      }));
-      console.log("[generatePromptFromImage] Prompt updated in settings for image ID:", imageToAnalyze.id);
+      return img;
+    }));
+    console.log("[generatePromptFromImage] Prompt updated in settings for image ID:", imageToAnalyze.id);
 
     } catch (error) { 
       console.error("[generatePromptFromImage] Error during prompt generation for image ID:", imageToAnalyze?.id, error);
@@ -654,16 +671,6 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
          setIsGeneratingPrompt(false); // Ensure it's false if queue becomes empty
       }
     }
-  };
-
-  const openComparisonModal = (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => {
-    setComparisonImages({ original: originalUrl, enhanced: enhancedUrl, operationType });
-    setIsComparisonModalOpen(true);
-  };
-
-  const closeComparisonModal = () => {
-    setIsComparisonModalOpen(false);
-    setComparisonImages(null);
   };
 
   const setActiveBottomPanelView = (view: BottomPanelView) => {
