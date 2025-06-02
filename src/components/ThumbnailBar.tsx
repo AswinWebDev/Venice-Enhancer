@@ -10,16 +10,7 @@ const ThumbnailBar: React.FC = () => {
   const selectedImage = images.find(img => img.id === selectedImageId);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  if (images.length === 0) {
-    return null;
-  }
-
-  const buttonStripHeightClass = 'h-12'; // Approx 3rem
-  const contentOpenMaxHeightClass = 'max-h-[12rem]'; // Use max-height for smooth transition
-
-  const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
-  const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
-
+  // useEffect must be called before any conditional returns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
@@ -36,7 +27,18 @@ const ThumbnailBar: React.FC = () => {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [activeBottomPanelView, setActiveBottomPanelView]);
+  }, [activeBottomPanelView, panelRef, setActiveBottomPanelView]); // Added panelRef, removed duplicate
+
+  // Conditional return now after all hooks
+  if (images.length === 0) {
+    return null;
+  }
+
+  const buttonStripHeightClass = 'h-12'; // Approx 3rem
+  const contentOpenMaxHeightClass = 'max-h-[12rem]'; // Use max-height for smooth transition
+
+  const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
+  const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center justify-end pointer-events-none">
