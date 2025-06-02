@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 const ThumbnailBar: React.FC = () => {
-  const { images, selectedImageId, selectImage, activeBottomPanelView, setActiveBottomPanelView, addImages } = useApp();
+  const { images, selectedImageId, selectImage, activeBottomPanelView, setActiveBottomPanelView, addImages, hasUnseenThumbnails } = useApp();
   const selectedImage = images.find(img => img.id === selectedImageId);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -90,7 +90,7 @@ const ThumbnailBar: React.FC = () => {
             <div className="w-px bg-black/10"></div>
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
-              className={`flex-1 flex items-center justify-center text-sm px-4 md:px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'}`}
+              className={`flex-1 flex items-center justify-center text-sm px-4 md:px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'} ${(hasUnseenThumbnails && activeBottomPanelView !== 'thumbnails') ? 'animate-blinkBg' : ''}`}
               aria-label="Show thumbnails"
               title="Show thumbnails"
               disabled={images.length === 0}

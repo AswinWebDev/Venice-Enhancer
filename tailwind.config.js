@@ -37,6 +37,7 @@ export default {
         scanMove: 'scanMove 2s ease-in-out infinite',
         scanPulse: 'scanPulse 2s infinite',
         modalFade: 'modalFade 0.2s ease-out',
+        blinkBg: 'blinkBg 1.5s infinite ease-in-out',
       },
       keyframes: {
         scanMove: {
@@ -51,6 +52,10 @@ export default {
         modalFade: {
           '0%': { opacity: 0 },
           '100%': { opacity: 1 },
+        },
+        blinkBg: {
+          '0%, 100%': { backgroundColor: 'transparent' },
+          '50%': { backgroundColor: 'rgba(255, 51, 51, 0.7)' },
         },
       },
     },

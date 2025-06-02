@@ -53,6 +53,7 @@ interface AppContextType {
   isComparisonModalOpen: boolean;
   comparisonImages: { original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null;
   activeBottomPanelView: BottomPanelView;
+  hasUnseenThumbnails: boolean; // Added for blinking thumbnail button
 
   // State Setters & Functions
   setSuccessNotification: (message: string | null) => void;
@@ -96,6 +97,7 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [promptQueue, setPromptQueue] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [hasUnseenThumbnails, setHasUnseenThumbnails] = useState<boolean>(false);
   const [isScanningModalOpen, setIsScanningModalOpen] = useState(false);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); // Manages the lock for sequential prompt generation
   const [activePromptGenerations, setActivePromptGenerations] = useState(0);
@@ -226,6 +228,7 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
         setSelectedImageId(firstNewImage.id);
         // No direct prompt trigger here, queue will handle it.
       }
+      setHasUnseenThumbnails(true); // Indicate new images have been added
     }
   };
 
@@ -661,7 +664,11 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
 
   const setActiveBottomPanelView = (view: BottomPanelView) => {
     setActiveBottomPanelViewState((currentView: BottomPanelView) => {
-      return currentView === view ? 'closed' : view;
+      const newPanelState = currentView === view ? 'closed' : view;
+      if (newPanelState === 'thumbnails') {
+        setHasUnseenThumbnails(false); // Reset when thumbnails are viewed
+      }
+      return newPanelState;
     });
   };
 
@@ -706,6 +713,7 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
         isComparisonModalOpen,
         comparisonImages,
         activeBottomPanelView, // Added
+        hasUnseenThumbnails, // Added for blinking thumbnail button
         setSuccessNotification,
         setApiErrorNotification,
         addImages,
