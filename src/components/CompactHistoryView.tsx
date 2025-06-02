@@ -14,7 +14,7 @@ interface CompactHistoryViewProps {
 const CompactHistoryView: React.FC<CompactHistoryViewProps> = ({ selectedImage }) => {
   if (!selectedImage) {
     return (
-      <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="py-4 text-center text-sm text-gray-500">
         No image selected to display history.
       </div>
     );
@@ -22,7 +22,7 @@ const CompactHistoryView: React.FC<CompactHistoryViewProps> = ({ selectedImage }
 
   if (!selectedImage.history || selectedImage.history.length === 0) {
     return (
-      <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+      <div className="py-4 text-center text-sm text-gray-500">
         No enhancement history for {selectedImage.name}.
       </div>
     );
