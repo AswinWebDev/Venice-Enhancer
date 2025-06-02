@@ -54,7 +54,7 @@ const ThumbnailBar: React.FC = () => {
           {/* Actual Button Strip - Narrower, Rounded Top, Glassmorphic */}
           <div
             className={`flex justify-center ${buttonStripHeightClass} w-full max-w-md /* Narrower width */
-                        backdrop-blur-2xl shadow-2xl rounded-t-[2rem] 
+                        backdrop-blur-2xl shadow-[0_-5px_15px_-5px_rgba(0,0,0,0.20)] rounded-t-[2rem] 
                         overflow-hidden relative z-10`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
           >
             <button
