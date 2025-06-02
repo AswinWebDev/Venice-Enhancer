@@ -6,9 +6,10 @@ interface ScanningModalProps {
   isOpen: boolean;
   onClose: () => void;
   imageName: string;
+  imageUrl: string | null; // Allow null if no image is specifically being scanned
 }
 
-const ScanningModal: React.FC<ScanningModalProps> = ({ isOpen, onClose, imageName }) => {
+const ScanningModal: React.FC<ScanningModalProps> = ({ isOpen, onClose, imageName, imageUrl }) => {
   if (!isOpen) return null;
 
   return (
@@ -26,7 +27,7 @@ const ScanningModal: React.FC<ScanningModalProps> = ({ isOpen, onClose, imageNam
         </h3>
         
         <div className="aspect-square w-full bg-gray-100 rounded-lg overflow-hidden">
-          <ScanningAnimation />
+          {imageUrl ? <ScanningAnimation imageUrl={imageUrl} progress={0.5} /> : <div className="w-full h-full bg-gray-200 flex items-center justify-center"><p className='text-gray-500'>Preparing image...</p></div>}
         </div>
         
         <p className="mt-4 text-sm text-gray-600">

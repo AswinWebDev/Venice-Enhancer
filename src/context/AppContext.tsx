@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ImageFile, HistoryItem, EnhanceSettings, ScaleOption } from '../types';
+import { ImageFile, HistoryItem, EnhanceSettings, ScaleOption, BottomPanelView } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Helper function to convert File to base64 string (without data:image/... prefix for upscale API)
@@ -42,73 +42,98 @@ const fileToDataURL = (file: File): Promise<string> => {
 interface AppContextType {
   images: ImageFile[];
   selectedImageId: string | null;
-  history: HistoryItem[];
-  settings: EnhanceSettings;
   isAdvancedOpen: boolean;
   isSidebarOpen: boolean;
   isScanningModalOpen: boolean;
-  isGeneratingPrompt: boolean; 
-  promptGenerationError: string | null; 
-  successNotification: string | null; 
-  apiErrorNotification: string | null; 
-  isComparisonModalOpen: boolean; 
-  comparisonImages: { original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null; 
-  
-  // Actions
+  isGeneratingPrompt: boolean; // Derived from activePromptGenerations > 0
+  scanningImageName: string | null;
+  scanningImageUrl: string | null;
+  successNotification: string | null;
+  apiErrorNotification: string | null;
+  isComparisonModalOpen: boolean;
+  comparisonImages: { original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null;
+  activeBottomPanelView: BottomPanelView;
+  hasUnseenThumbnails: boolean; // Added for blinking thumbnail button
+
+  // State Setters & Functions
+  setSuccessNotification: (message: string | null) => void;
+  setApiErrorNotification: (message: string | null) => void;
   addImages: (files: File[]) => Promise<void>;
   removeImage: (id: string) => void;
-  selectImage: (id: string) => void;
-  updateSettings: (newSettings: Partial<EnhanceSettings>) => void;
-  setScale: (scale: ScaleOption) => void;
+  selectImage: (id: string | null) => void;
+  updateSettings: (settings: Partial<EnhanceSettings>) => void;
+  setScale: (scale: ScaleOption) => void; // Assuming this was for global settings, might need re-evaluation for per-image
   toggleAdvanced: () => void;
   toggleSidebar: () => void;
-  closeScanningModal: () => void;
-  enhanceImages: () => Promise<void>;
+  closeScanningModal: () => void; // This might be redundant if modal is purely controlled by activePromptGenerations
+  enhanceImages: (ids: string[], scale: ScaleOption) => Promise<void>; // Assuming enhanceImages is the correct name
   clearImages: () => void;
-  generatePromptFromImage: (imageFile: ImageFile) => Promise<void>; 
-  setSuccessNotification: (message: string | null) => void; 
-  setApiErrorNotification: (message: string | null) => void; 
-  openComparisonModal: (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => void; 
-  closeComparisonModal: () => void; 
+  generatePromptFromImage: (imageToAnalyze: ImageFile) => Promise<void>; // Kept for now, though primarily internal
+  openComparisonModal: (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => void;
+  closeComparisonModal: () => void;
+  setActiveBottomPanelView: (view: BottomPanelView) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider = ({ children }: { children: ReactNode }) => {
+export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element => {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [selectedImageId, setSelectedImageId] = useState<string | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [settings, setSettings] = useState<EnhanceSettings>({
+  // const [settings, setSettings] = useState<EnhanceSettings>({ // Removed for per-image settings
+  //   scale: '2x',
+  //   enhance: true,
+  //   creativity: 0.35,
+  //   adherence: 0.35,
+  //   prompt: "",
+  // });
+
+  const DEFAULT_ENHANCE_SETTINGS: EnhanceSettings = {
     scale: '2x',
     enhance: true,
-    creativity: 0.35, // Default updated
-    adherence: 0.35,  // Default updated
+    creativity: 0.35,
+    adherence: 0.35,
     prompt: "",
-  });
+  };
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [promptQueue, setPromptQueue] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [hasUnseenThumbnails, setHasUnseenThumbnails] = useState<boolean>(false);
   const [isScanningModalOpen, setIsScanningModalOpen] = useState(false);
-  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); 
-  const [promptGenerationError, setPromptGenerationError] = useState<string | null>(null); 
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false); // Manages the lock for sequential prompt generation
+  const [activePromptGenerations, setActivePromptGenerations] = useState(0);
+  const [scanningImageName, setScanningImageName] = useState<string | null>(null);
+  const [scanningImageUrl, setScanningImageUrl] = useState<string | null>(null); 
+  // const [promptGenerationError, setPromptGenerationError] = useState<string | null>(null); // Removed
   const [successNotification, setSuccessNotification] = useState<string | null>(null); 
   const [apiErrorNotification, setApiErrorNotification] = useState<string | null>(null); 
   const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false); 
-  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null>(null); 
-  
-  useEffect(() => {
-    const savedHistory = localStorage.getItem('venice-history');
-    if (savedHistory) {
-      try {
-        setHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error('Failed to parse history', e);
-      }
-    }
-  }, []);
+  const [comparisonImages, setComparisonImages] = useState<{ original: string; enhanced: string; operationType: 'enhanced' | 'upscaled' } | null>(null);
+  const [activeBottomPanelView, setActiveBottomPanelViewState] = useState<BottomPanelView>('closed');
 
-  useEffect(() => {
-    localStorage.setItem('venice-history', JSON.stringify(history));
-  }, [history]);
+  // --- Utility and Core Logic Functions ---
+
+
+  // useEffect(() => { // Commented out: History will be per-image and localStorage logic needs rework
+  //   const savedHistory = localStorage.getItem('venice-history');
+  //   if (savedHistory) {
+  //     try {
+  //       const parsedHistory = JSON.parse(savedHistory);
+  //       if (Array.isArray(parsedHistory) && parsedHistory.every(item => item.id && item.originalImage && item.enhancedImage && item.settings && item.timestamp)) {
+  //         setHistory(parsedHistory);
+  //       } else {
+  //         console.warn('Invalid history format in localStorage. Clearing.');
+  //         localStorage.removeItem('venice-history');
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to parse history from localStorage:', error);
+  //       localStorage.removeItem('venice-history');
+  //     }
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem('venice-history', JSON.stringify(history));
+  // }, [history]);
 
   // Auto-dismiss success notification
   useEffect(() => {
@@ -130,34 +155,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [apiErrorNotification]);
 
-  const triggerPromptGeneration = (imageToProcess: ImageFile | null) => {
-    if (!imageToProcess) {
-      updateSettings({ prompt: "" });
-      console.log("[triggerPromptGeneration] No image to process, cleared prompt.");
-      return;
-    }
-
-    // Check if a prompt is already being generated for THIS specific image ID
-    // This is a local check to prevent re-triggering for the same image if called in quick succession
-    // The global isGeneratingPrompt is the main gatekeeper for concurrent API calls.
-    if (imageToProcess.status === 'scanning') { 
-        console.log(`[triggerPromptGeneration] Skipped for ${imageToProcess.id}, already in 'scanning' state.`);
-        return;
-    }
-
-    if (!isGeneratingPrompt) {
-      console.log(`[triggerPromptGeneration] Attempting for image: ${imageToProcess.id}`);
-      updateSettings({ prompt: "" }); // Clear previous global prompt from settings/UI
-      generatePromptFromImage(imageToProcess);
-    } else {
-      console.log(`[triggerPromptGeneration] Skipped for ${imageToProcess.id}, another prompt generation in progress (global isGeneratingPrompt).`);
-    }
-  };
-
+  // --- Image Management Functions ---
   const addImages = async (files: File[]) => {
+    const isFirstUploadAttempt = images.length === 0; // Check if images array is currently empty
     setIsScanningModalOpen(true);
     const newImagesToAdd: ImageFile[] = [];
-    let newlySelectedImageForPrompt: ImageFile | null = null;
 
     const MAX_PIXELS = 4096 * 4096;
     const MAX_FILE_SIZE_MB = 20;
@@ -207,6 +209,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         status: 'idle',
         progress: 0,
         selected: false,
+        settings: { ...DEFAULT_ENHANCE_SETTINGS }, // Initialize with default settings
+        history: [], // Initialize with empty history
       };
       newImagesToAdd.push(newImage);
     }
@@ -215,92 +219,121 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     if (newImagesToAdd.length > 0) {
       setImages(prevImages => [...prevImages, ...newImagesToAdd]);
       
-      // If no image was previously selected, select the first of the newly added images
-      // and mark it for prompt generation.
+      const newImageIds = newImagesToAdd.map(img => img.id);
+      setPromptQueue(prevQueue => [...prevQueue, ...newImageIds]);
+
+      // If no image was previously selected, select the first of the newly added images.
+      // Prompt generation will be handled by the queue.
       if (!selectedImageId && newImagesToAdd.length > 0) {
         const firstNewImage = newImagesToAdd[0];
         setSelectedImageId(firstNewImage.id);
-        newlySelectedImageForPrompt = firstNewImage; 
+        // No direct prompt trigger here, queue will handle it.
       }
-    }
+      if (isFirstUploadAttempt && newImagesToAdd.length > 0) {
+        setHasUnseenThumbnails(true); // Indicate new images have been added on the first upload
+      }
 
-    // Trigger prompt generation outside the setImages updater, after state has likely updated
-    if (newlySelectedImageForPrompt) {
-        triggerPromptGeneration(newlySelectedImageForPrompt);
     }
   };
 
   const removeImage = (id: string) => {
     let imageToRevokePreview: ImageFile | undefined;
-    let nextSelectedImageForPrompt: ImageFile | null = null;
+    let newSelectedImageIdAfterRemove: string | null = null;
 
     setImages(prevImages => {
       imageToRevokePreview = prevImages.find(img => img.id === id);
       const remainingImages = prevImages.filter(img => img.id !== id);
-      
       if (selectedImageId === id) {
         if (remainingImages.length > 0) {
-          const newSelectedImage = remainingImages[0];
-          setSelectedImageId(newSelectedImage.id);
-          nextSelectedImageForPrompt = newSelectedImage;
+          newSelectedImageIdAfterRemove = remainingImages[0].id;
+          setSelectedImageId(newSelectedImageIdAfterRemove);
         } else {
           setSelectedImageId(null);
-          nextSelectedImageForPrompt = null; // Signal to clear prompt
+          newSelectedImageIdAfterRemove = null;
         }
       }
       return remainingImages;
     });
 
+    // Also remove from prompt queue if it's there
+    setPromptQueue(prevQueue => prevQueue.filter(queuedId => queuedId !== id));
+
     if (imageToRevokePreview) {
       URL.revokeObjectURL(imageToRevokePreview.preview);
-    }
-
-    // Trigger prompt generation for the new selection or clear prompt
-    // Do this after state updates have settled.
-    // Need to handle the case where nextSelectedImageForPrompt is null (clear prompt)
-    // or an actual image (generate for it).
-    // The triggerPromptGeneration function handles null correctly.
-    if (selectedImageId === id || (selectedImageId === null && !nextSelectedImageForPrompt)) { // ensures it's called if selection changed or cleared
-        triggerPromptGeneration(nextSelectedImageForPrompt);
-    }
-  };
-
-  const selectImage = (id: string) => {
-    const previouslySelectedId = selectedImageId;
-    setSelectedImageId(id);
-    const image = images.find(img => img.id === id);
-    if (image && previouslySelectedId !== id) {
-      // If selection changes, and the new image doesn't have a prompt yet (or we always want to refresh)
-      // We might want to clear the global prompt or trigger generation for the newly selected one.
-      // For now, let's clear the global prompt and trigger generation if it's 'idle'.
-      if (image.status === 'idle' || !settings.prompt) { // or some other condition
-        updateSettings({ prompt: "" }); // Clear current prompt from UI
-        triggerPromptGeneration(image);
+      if (imageToRevokePreview.enhanced) { // Also revoke enhanced if it exists
+        URL.revokeObjectURL(imageToRevokePreview.enhanced);
       }
-      // If the image already has a prompt (e.g. loaded from history or previously generated and stored on ImageFile object)
-      // you might want to load that into settings.prompt instead.
-      // else if (image.generatedPrompt) { updateSettings({ prompt: image.generatedPrompt }); }
+      // Revoke all history item URLs for the removed image
+      if (imageToRevokePreview.history && imageToRevokePreview.history.length > 0) {
+        imageToRevokePreview.history.forEach(historyItem => {
+          URL.revokeObjectURL(historyItem.enhancedUrl);
+        });
+      }
+    }
+
+    // If a new image was selected as a result of deletion, check if it needs a prompt
+    // Need to find the image from the 'images' state which would have been updated by setImages
+    if (newSelectedImageIdAfterRemove) {
+      // Use a slight delay or useEffect to ensure 'images' state is updated before finding
+      // For now, let's assume 'images' might not be immediately updated here for the find.
+      // A more robust way would be to pass the image object or rely on useEffect based on selectedImageId change.
+      // However, for queueing, adding the ID is sufficient if processPromptQueue correctly finds it.
+      const newlySelectedImage = images.find(img => img.id === newSelectedImageIdAfterRemove);
+      if (newlySelectedImage && (newlySelectedImage.status === 'idle' || (newlySelectedImage.status !== 'scanning' && !newlySelectedImage.settings.prompt))) {
+        setPromptQueue((prevQueue: string[]) => {
+          const filteredQueue = prevQueue.filter((queuedId: string) => queuedId !== newlySelectedImage.id);
+          // Add to front of queue, ensuring no duplicates if it was already there (filteredQueue handles this)
+          return [newlySelectedImage.id, ...filteredQueue]; 
+        });
+      }
     }
   };
 
   const updateSettings = (newSettings: Partial<EnhanceSettings>) => {
-    setSettings(prev => {
-      const updated = { ...prev, ...newSettings };
-      // If enhance is being turned off, set creativity to 0
-      if (newSettings.enhance === false) {
-        updated.creativity = 0;
+    setImages(prevImages => prevImages.map(img => {
+      if (img.id === selectedImageId) {
+        // Start with the current image settings and apply incoming newSettings
+        let updatedImgSettings = { ...img.settings, ...newSettings };
+
+        // If 'enhance' is explicitly being set in newSettings
+        if (newSettings.hasOwnProperty('enhance')) {
+          if (newSettings.enhance === false) {
+            // If enhance is being turned off, set creativity to 0
+            updatedImgSettings.creativity = 0;
+          } else if (newSettings.enhance === true && img.settings.enhance === false) {
+            // If enhance is being turned on from a previously 'off' state,
+            // and creativity was 0 (or we decide to always reset), reset creativity.
+            // Using DEFAULT_ENHANCE_SETTINGS.creativity ensures consistency.
+            if (updatedImgSettings.creativity === 0) { // Check if it was 0
+                 updatedImgSettings.creativity = DEFAULT_ENHANCE_SETTINGS.creativity;
+            }
+          }
+        }
+        return { ...img, settings: updatedImgSettings };
       }
-      // If enhance is being turned on and creativity was 0 (likely due to enhance being off previously),
-      // reset creativity to default.
-      if (newSettings.enhance === true && prev.enhance === false && updated.creativity === 0) {
-        updated.creativity = 0.35; // Reset to default when re-enabling enhance
+      return img;
+    }));
+  };
+
+  const selectImage = (id: string | null) => {
+    setSelectedImageId(id);
+    if (id) {
+      const image = images.find(img => img.id === id);
+      // If the image is selected, exists, is idle, and doesn't have a prompt yet, add it to the queue.
+      if (image && image.status === 'idle' && !image.settings.prompt) {
+        setPromptQueue((prevQueue: string[]) => {
+          // Avoid adding duplicates to the queue
+          if (!prevQueue.includes(image.id)) {
+            return [...prevQueue, image.id];
+          }
+          return prevQueue;
+        });
       }
-      return updated;
-    });
+    }
   };
 
   const setScale = (scale: ScaleOption) => {
-    setSettings(prev => ({ ...prev, scale }));
+    updateSettings({ scale });
   };
 
   const toggleAdvanced = () => {
@@ -350,15 +383,15 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const imageBase64 = await fileToBase64(imageToProcess.file);
-      const scaleValue = parseInt(settings.scale.replace('x', ''), 10);
+      const scaleValue = parseInt(imageToProcess.settings.scale.replace('x', ''), 10);
 
       const payload = {
         image: imageBase64,
         scale: scaleValue,
-        enhance: settings.enhance,
-        enhanceCreativity: settings.creativity,
-        replication: settings.adherence, // Mapping adherence to replication as per API docs
-        enhancePrompt: settings.enhance ? (settings.prompt || '') : '', // Send empty prompt if enhance is false
+        enhance: imageToProcess.settings.enhance,
+        enhanceCreativity: imageToProcess.settings.creativity,
+        replication: imageToProcess.settings.adherence, // Mapping adherence to replication as per API docs
+        enhancePrompt: imageToProcess.settings.enhance ? (imageToProcess.settings.prompt || '') : '', // Send empty prompt if enhance is false
       };
 
       const response = await fetch('https://api.venice.ai/api/v1/image/upscale', {
@@ -386,30 +419,28 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         document.body.removeChild(link);
         // link.remove(); // Alternative for modern browsers
 
-        const operationType: 'enhanced' | 'upscaled' = settings.enhance ? 'enhanced' : 'upscaled';
+        const operationType: 'enhanced' | 'upscaled' = imageToProcess.settings.enhance ? 'enhanced' : 'upscaled';
         setImages(prev =>
           prev.map(img => {
             if (img.id === selectedImageId) {
-              // Revoke old enhanced image URL if it exists, before assigning new one
-              if (img.enhanced) {
-                URL.revokeObjectURL(img.enhanced);
-              }
+              // const oldEnhancedUrl = img.enhanced; // Keep for potential later, more granular revocation if needed
+
+              const newHistoryItem: HistoryItem = {
+                id: uuidv4(),
+                timestamp: Date.now(),
+                settingsUsed: { ...img.settings }, // Snapshot of settings used
+                enhancedUrl: enhancedImageUrl,
+                operationType: operationType,
+              };
+
               const updatedImage = {
                 ...img,
                 status: 'complete' as const,
                 enhanced: enhancedImageUrl,
                 error: undefined,
                 operationType,
+                history: [newHistoryItem, ...(img.history || [])].slice(0, 20), // Add to per-image history, limit to 20
               };
-
-              const historyItem: HistoryItem = {
-                id: uuidv4(),
-                originalImage: img.preview, // Changed back from url to preview
-                enhancedImage: enhancedImageUrl, // New enhanced image URL
-                settings: { ...settings }, // Current settings used for enhancement
-                timestamp: Date.now(),
-              };
-              setHistory(prevHistory => [historyItem, ...prevHistory].slice(0, 50)); // Keep history to 50 items
               return updatedImage;
             }
             return img;
@@ -454,6 +485,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     images.forEach(img => {
       URL.revokeObjectURL(img.preview); // Changed back from url to preview
       if (img.enhanced) URL.revokeObjectURL(img.enhanced);
+      // Revoke all history item URLs for each image being cleared
+      if (img.history && img.history.length > 0) {
+        img.history.forEach(historyItem => {
+          URL.revokeObjectURL(historyItem.enhancedUrl);
+        });
+      }
     });
     setImages([]);
     setSelectedImageId(null);
@@ -462,7 +499,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const generatePromptFromImage = async (imageToAnalyze: ImageFile) => { 
     if (!imageToAnalyze || !imageToAnalyze.preview || !imageToAnalyze.file) {
       console.error("[generatePromptFromImage] Invalid imageToAnalyze or missing preview/file for ID:", imageToAnalyze?.id);
-      setPromptGenerationError("Cannot generate prompt: Image data is missing.");
+      // setPromptGenerationError("Cannot generate prompt: Image data is missing.");
       // Update specific image status to 'error' if it exists in the array
       if (imageToAnalyze?.id) {
         setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'error', error: 'Image data missing' } : img));
@@ -475,7 +512,16 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     // Update specific image status to 'scanning' and clear any previous error
     setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'scanning', error: undefined } : img));
     setIsGeneratingPrompt(true);
-    setPromptGenerationError(null); // Clear global prompt generation error state
+    // setPromptGenerationError(null); // Clear global prompt generation error state
+    setActivePromptGenerations(prevCount => {
+      const newCount = prevCount + 1;
+      if (newCount === 1) {
+        setIsScanningModalOpen(true);
+      }
+      setScanningImageName(imageToAnalyze.name);
+      setScanningImageUrl(imageToAnalyze.preview);
+      return newCount;
+    });
     console.log("[generatePromptFromImage] State set for prompt generation. Attempting fileToDataURL for image ID:", imageToAnalyze.id);
 
     try {
@@ -487,14 +533,14 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "qwen-2.5-vl",
+          model: "mistral-31-24b",
           messages: [
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: "First give a short, concise title (3-5 words) for this image, then write a detailed prompt with which I can replicate this image with an AI image generator. Format your response exactly like this - Title: [title] Prompt: [detailed prompt]",
+                  text: "Generate a prompt that would create this exact image. Just provide the prompt itself, do not start with \"create\" or \"generate\" etc.",
                 },
                 {
                   type: "image_url",
@@ -547,24 +593,68 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       
       const description = promptMatch ? promptMatch[1].trim() : content.trim();
 
-      updateSettings({ prompt: description });
-      // Reset status to 'idle' and clear error on success
-      setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'idle', error: undefined } : img)); 
+      setImages(prevImages => prevImages.map(img => {
+        if (img.id === imageToAnalyze.id) {
+          return {
+            ...img,
+            settings: { ...img.settings, prompt: description, enhance: true },
+            status: 'idle' as const, // Ensure status is of the correct literal type
+            error: undefined
+          };
+        }
+        return img;
+      }));
       console.log("[generatePromptFromImage] Prompt updated in settings for image ID:", imageToAnalyze.id);
 
     } catch (error) { 
       console.error("[generatePromptFromImage] Error during prompt generation for image ID:", imageToAnalyze?.id, error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to generate prompt.';
-      setPromptGenerationError(errorMessage); // Set global prompt generation error
+      // setPromptGenerationError(errorMessage); // Set global prompt generation error
       setApiErrorNotification(errorMessage); // Show notification
       // Update specific image status to 'error' and set the error message
       if (imageToAnalyze?.id) {
         setImages(prev => prev.map(img => img.id === imageToAnalyze.id ? { ...img, status: 'error', error: errorMessage } : img));
       }
+    } finally {
+      setActivePromptGenerations(prevCount => {
+        const newCount = prevCount - 1;
+        if (newCount === 0) {
+          setIsScanningModalOpen(false);
+          setScanningImageName(null);
+          setScanningImageUrl(null);
+        }
+        // If other images are in queue and being processed by processPromptQueue,
+        // the modal will update its name/image when the next generatePromptFromImage starts.
+        return newCount;
+      });
+      setIsGeneratingPrompt(false); // Crucial for processPromptQueue to pick up next item
     }
-    setIsGeneratingPrompt(false);
-    console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id, "Current global prompt error state:", promptGenerationError);
+    console.log("[generatePromptFromImage] Finished for image ID:", imageToAnalyze?.id);
   }; 
+
+  const processPromptQueue = async () => {
+    if (isGeneratingPrompt || promptQueue.length === 0) {
+      return;
+    }
+    const nextImageId = promptQueue[0];
+    const imageToProcess = images.find(img => img.id === nextImageId);
+
+    if (imageToProcess) {
+      setIsGeneratingPrompt(true); // Lock for this generation
+      setPromptQueue((prevQueue: string[]) => prevQueue.slice(1));
+      try {
+        await generatePromptFromImage(imageToProcess);
+      } finally {
+        setIsGeneratingPrompt(false); // Unlock after this specific generation is done, regardless of success/failure
+      }
+    } else {
+      console.warn(`[processPromptQueue] Image with ID ${nextImageId} not found. Removing from queue.`);
+      setPromptQueue((prevQueue: string[]) => prevQueue.filter((id: string) => id !== nextImageId));
+      if (promptQueue.length === 0) {
+         setIsGeneratingPrompt(false); // Ensure it's false if queue becomes empty
+      }
+    }
+  };
 
   const openComparisonModal = (originalUrl: string, enhancedUrl: string, operationType: 'enhanced' | 'upscaled') => {
     setComparisonImages({ original: originalUrl, enhanced: enhancedUrl, operationType });
@@ -576,24 +666,60 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setComparisonImages(null);
   };
 
+  const setActiveBottomPanelView = (view: BottomPanelView) => {
+    setActiveBottomPanelViewState((currentView: BottomPanelView) => {
+      const newPanelState = currentView === view ? 'closed' : view;
+      if (newPanelState === 'thumbnails') {
+        setHasUnseenThumbnails(false); // Reset when thumbnails are viewed
+      }
+      return newPanelState;
+    });
+  };
+
+  useEffect(() => {
+    if (successNotification) {
+      const timer = setTimeout(() => {
+        setSuccessNotification(null);
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [successNotification]);
+
+  useEffect(() => {
+    if (apiErrorNotification) {
+      const timer = setTimeout(() => {
+        setApiErrorNotification(null);
+      }, 5000); // Auto-dismiss after 5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [apiErrorNotification]);
+
+  useEffect(() => {
+    // Process the prompt queue
+    if (!isGeneratingPrompt && promptQueue.length > 0) {
+      processPromptQueue();
+    }
+  }, [isGeneratingPrompt, promptQueue, images, processPromptQueue]);
+
   return (
     <AppContext.Provider
       value={{
         images,
         selectedImageId,
-        history,
-        settings,
         isAdvancedOpen,
         isSidebarOpen,
         isScanningModalOpen,
-        isGeneratingPrompt, 
-        promptGenerationError, 
-        successNotification, 
-        apiErrorNotification, 
-        isComparisonModalOpen, 
-        comparisonImages, 
-        setSuccessNotification, 
-        setApiErrorNotification, 
+        isGeneratingPrompt: activePromptGenerations > 0, // Derived state
+        scanningImageName,
+        scanningImageUrl,
+        successNotification,
+        apiErrorNotification,
+        isComparisonModalOpen,
+        comparisonImages,
+        activeBottomPanelView, // Added
+        hasUnseenThumbnails, // Added for blinking thumbnail button
+        setSuccessNotification,
+        setApiErrorNotification,
         addImages,
         removeImage,
         selectImage,
@@ -604,9 +730,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         closeScanningModal,
         enhanceImages,
         clearImages,
-        generatePromptFromImage, 
-        openComparisonModal, 
-        closeComparisonModal 
+        generatePromptFromImage, // Still exposed, might be for direct calls or testing
+        openComparisonModal,
+        closeComparisonModal,
+        setActiveBottomPanelView, // Added
       }}
     >
       {children}
