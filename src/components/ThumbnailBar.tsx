@@ -54,23 +54,23 @@ const ThumbnailBar: React.FC = () => {
           {/* Actual Button Strip - Narrower, Rounded Top, Glassmorphic */}
           <div
             className={`flex justify-center ${buttonStripHeightClass} w-full max-w-md /* Narrower width */
-                        dark:bg-slate-800/20 backdrop-blur-2xl shadow-2xl rounded-t-[2rem] 
-                        border-x border-t border-white/25 dark:border-slate-700/25 overflow-hidden relative z-10`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
+                        backdrop-blur-2xl shadow-2xl rounded-t-[2rem] 
+                        overflow-hidden relative z-10`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
           >
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
-              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-slate-700/10'}`}
+              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'}`}
               aria-label="Show thumbnails"
               title="Show thumbnails"
             >
               <Images size={16} className="mr-2" />
               Thumbnails
             </button>
-            <div className="w-px bg-white/30 dark:bg-slate-700/30"></div> {/* Vertical separator */}
+            <div className="w-px bg-black/10"></div> {/* Vertical separator */}
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
               disabled={!selectedImageId}
-              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-slate-700/10'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Show history"
               title="Show history"
             >
@@ -88,8 +88,8 @@ const ThumbnailBar: React.FC = () => {
           {/* Middle Content Div: Handles opacity, background, borders, shadow */}
           <div
             className={`transition-[opacity,visibility] duration-500 ease-out w-full h-full 
-                        dark:bg-slate-800/20 backdrop-blur-2xl shadow-lg /* Glassmorphic */
-                        ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible border-x border-b border-t border-white/25 dark:border-slate-700/25' : 'opacity-0 delay-500 invisible border-transparent'}`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
+                        backdrop-blur-2xl shadow-lg /* Glassmorphic */
+                        ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible' : 'opacity-0 delay-500 invisible'}`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
           >
             {/* Innermost Content Div: Handles padding and scrolling */}
             <div className={`h-40 ${activeBottomPanelView !== 'closed' ? 'p-2' : 'p-0'} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent`}> 
