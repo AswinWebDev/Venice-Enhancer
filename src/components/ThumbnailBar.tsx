@@ -59,7 +59,7 @@ const ThumbnailBar: React.FC = () => {
           >
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
-              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'}`}
+              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-slate-700/10'}`}
               aria-label="Show thumbnails"
               title="Show thumbnails"
             >
@@ -70,7 +70,7 @@ const ThumbnailBar: React.FC = () => {
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
               disabled={!selectedImageId}
-              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full hover:bg-white/10 dark:hover:bg-slate-700/10 ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`flex-1 flex items-center justify-center text-sm px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-gray-700 dark:text-gray-200 hover:bg-white/10 dark:hover:bg-slate-700/10'} ${!selectedImageId ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Show history"
               title="Show history"
             >
