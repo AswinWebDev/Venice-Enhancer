@@ -92,7 +92,7 @@ const ThumbnailBar: React.FC = () => {
                         ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible border-x border-b border-t border-white/25 dark:border-slate-700/25' : 'opacity-0 delay-500 invisible border-transparent'}`}
           >
             {/* Innermost Content Div: Handles padding and scrolling */}
-            <div className={`h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent ${activeBottomPanelView !== 'closed' ? 'p-2' : 'p-0'}`}> 
+            <div className={`${activeBottomPanelView !== 'closed' ? 'h-40 p-2' : 'h-0 p-0'} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent`}> 
               {activeBottomPanelView === 'thumbnails' && (
                 <div className="flex overflow-x-auto space-x-2 py-1">
                   {images.map(image => (
