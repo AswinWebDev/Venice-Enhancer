@@ -35,10 +35,10 @@ const ThumbnailBar: React.FC = () => {
   }
 
   const buttonStripHeightClass = 'h-12'; // Approx 3rem
-  const contentOpenMaxHeightClass = 'max-h-[12rem]'; // Use max-height for smooth transition
+  const contentOpenMaxHeightClass = 'max-h-40'; // 10rem, matches h-40 content
 
   const closedPanelMaxHeight = 'max-h-12'; // Should match buttonStripHeightClass
-  const openPanelMaxHeight = 'max-h-[15rem]'; // buttonStripHeight (3rem) + contentAreaHeight (12rem)
+  const openPanelMaxHeight = 'max-h-52'; // buttonStripHeight (h-12, 3rem) + contentAreaHeight (h-40, 10rem) = 13rem
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 flex flex-col items-center justify-end pointer-events-none">
@@ -92,7 +92,7 @@ const ThumbnailBar: React.FC = () => {
                         ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible border-x border-b border-t border-white/25 dark:border-slate-700/25' : 'opacity-0 delay-500 invisible border-transparent'}`}
           >
             {/* Innermost Content Div: Handles padding and scrolling */}
-            <div className={`${activeBottomPanelView !== 'closed' ? 'h-40 p-2' : 'h-0 p-0'} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent`}> 
+            <div className={`h-40 ${activeBottomPanelView !== 'closed' ? 'p-2' : 'p-0'} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent`}> 
               {activeBottomPanelView === 'thumbnails' && (
                 <div className="flex overflow-x-auto space-x-2 py-1">
                   {images.map(image => (
