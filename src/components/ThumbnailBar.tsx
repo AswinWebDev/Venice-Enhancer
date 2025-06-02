@@ -98,7 +98,7 @@ const ThumbnailBar: React.FC = () => {
             >
               <Images size={16} className="mr-1 md:mr-2" /> 
               Thumbnails
-              {activeBottomPanelView === 'thumbnails' && <ChevronDown size={18} className="ml-1 animate-pulse" />}
+              {activeBottomPanelView === 'thumbnails' && <ChevronDown size={18} className="ml-1 animate-bounce" />}
             </button>
             <div className="w-px bg-black/10"></div>
             <button
@@ -110,7 +110,7 @@ const ThumbnailBar: React.FC = () => {
             >
               <History size={16} className="mr-1 md:mr-2" /> 
               History
-              {activeBottomPanelView === 'history' && <ChevronDown size={18} className="ml-1 animate-pulse" />}
+              {activeBottomPanelView === 'history' && <ChevronDown size={18} className="ml-1 animate-bounce" />}
             </button>
           </div>
         </div>
