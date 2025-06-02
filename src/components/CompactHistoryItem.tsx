@@ -24,17 +24,17 @@ const CompactHistoryItem: React.FC<CompactHistoryItemProps> = ({ historyItem, or
   }
 
   return (
-    <div className="flex items-center p-2 bg-gray-50 dark:bg-gray-700 rounded-lg shadow hover:shadow-md transition-shadow duration-200 space-x-3 min-w-[200px] max-w-[280px]">
+    <div className="flex items-center p-2 bg-gray-50 rounded-lg shadow hover:shadow-md transition-shadow duration-200 space-x-3 min-w-[200px] max-w-[280px]">
       <img 
         src={historyItem.enhancedUrl} 
         alt={`History ${historyItem.id}`} 
-        className="w-16 h-16 object-cover rounded-md border border-gray-300 dark:border-gray-600"
+        className="w-16 h-16 object-cover rounded-md border border-gray-300"
       />
       <div className="flex-grow overflow-hidden">
-        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate" title={operationLabel}>
+        <p className="text-xs font-semibold text-black truncate" title={operationLabel}>
           {operationLabel}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-neutral-700">
           {new Date(historyItem.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
