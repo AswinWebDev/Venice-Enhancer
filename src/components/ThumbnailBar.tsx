@@ -97,7 +97,7 @@ const ThumbnailBar: React.FC = () => {
               disabled={images.length === 0}
             >
               <Images size={16} className="mr-1 md:mr-2" /> 
-              Thumbnails
+              Uploads
               {activeBottomPanelView === 'thumbnails' && <ChevronDown size={18} className="ml-1 animate-bounce" />}
             </button>
             <div className="w-px bg-black/10"></div>
