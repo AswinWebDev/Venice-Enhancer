@@ -15,7 +15,7 @@ const ThumbnailItem: React.FC<ThumbnailItemProps> = ({ image, isSelected, onClic
 
   return (
     <div
-      className={`relative aspect-square w-24 h-24 m-1 cursor-pointer rounded-md overflow-hidden group ${baseRingClass} ${selectedRingClass}`}
+      className={`relative aspect-square flex-shrink-0 w-24 h-24 cursor-pointer rounded-md overflow-hidden group ${baseRingClass} ${selectedRingClass}`}
       onClick={() => onClick(image.id)}
       title={image.name}
     >

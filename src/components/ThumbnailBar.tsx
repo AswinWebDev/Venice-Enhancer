@@ -127,7 +127,7 @@ const ThumbnailBar: React.FC = () => {
                 className={`h-36 ${activeBottomPanelView !== 'closed' ? 'p-2 py-3' : 'p-0'} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent`}
               >
                 {activeBottomPanelView === 'thumbnails' && (
-                  <div className="flex overflow-x-auto space-x-2 py-1">
+                  <div className="flex flex-nowrap overflow-x-auto space-x-2 py-1 px-2">
                     {images.map(image => (
                       <ThumbnailItem
                         key={image.id}
