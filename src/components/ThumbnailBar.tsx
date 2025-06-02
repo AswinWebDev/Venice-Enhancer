@@ -82,13 +82,13 @@ const ThumbnailBar: React.FC = () => {
 
         {/* Content Area - Wider, Appears/disappears BELOW the button strip */}
         <div
-          className={`transition-[max-height] duration-500 ease-out overflow-hidden w-full
+          className={`transition-[max-height] duration-500 ease-out overflow-hidden w-full shadow-[0_10px_15px_-3px_rgba(0,0,0,0.9),_0_4px_6px_-4px_rgba(0,0,0,0.9)]
                       ${activeBottomPanelView !== 'closed' ? contentOpenMaxHeightClass : 'max-h-0'}`}
         >
           {/* Middle Content Div: Handles opacity, background, borders, shadow */}
           <div
             className={`transition-[opacity,visibility] duration-500 ease-out w-full h-full 
-                        backdrop-blur-2xl shadow-lg /* Glassmorphic */
+                        backdrop-blur-2xl /* Glassmorphic, shadow removed */
                         ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible' : 'opacity-0 delay-500 invisible'}`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
           >
             {/* Innermost Content Div: Handles padding and scrolling */}
