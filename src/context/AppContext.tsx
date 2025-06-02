@@ -533,14 +533,14 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "qwen-2.5-vl",
+          model: "mistral-31-24b",
           messages: [
             {
               role: "user",
               content: [
                 {
                   type: "text",
-                  text: "First give a short, concise title (3-5 words) for this image, then write a detailed prompt with which I can replicate this image with an AI image generator. Format your response exactly like this - Title: [title] Prompt: [detailed prompt]",
+                  text: "Generate a prompt that would create this exact image. Just provide the prompt itself, do not start with \"create\" or \"generate\" etc.",
                 },
                 {
                   type: "image_url",
