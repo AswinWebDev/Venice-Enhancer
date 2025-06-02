@@ -11,7 +11,7 @@ interface ThumbnailItemProps {
 
 const ThumbnailItem: React.FC<ThumbnailItemProps> = ({ image, isSelected, onClick, isPromptGenerated }) => {
   const baseRingClass = 'ring-2 transition-all duration-150 ease-in-out';
-  const selectedRingClass = isSelected ? 'ring-venice-red ring-offset-2 ring-offset-gray-100 dark:ring-offset-gray-800' : 'ring-transparent hover:ring-venice-red/50';
+  const selectedRingClass = isSelected ? 'ring-venice-red ring-offset-2 ring-offset-gray-100' : 'ring-transparent hover:ring-venice-red/50';
 
   return (
     <div
