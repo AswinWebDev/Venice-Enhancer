@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { ImageFile } from '../types';
 import ThumbnailItem from './ThumbnailItem';
 import CompactHistoryView from './CompactHistoryView';
-import { Images, History, Plus } from 'lucide-react';
+import { Images, History, Plus, ChevronDown } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 
@@ -91,24 +91,26 @@ const ThumbnailBar: React.FC = () => {
             <div className="w-px bg-black/10"></div>
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
-              className={`flex-1 flex items-center justify-center text-sm px-4 md:px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'} ${(hasUnseenThumbnails && activeBottomPanelView !== 'thumbnails') ? 'animate-blinkBg' : ''}`}
+              className={`group flex-1 flex items-center justify-center text-sm px-4 md:px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'thumbnails' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'} ${(hasUnseenThumbnails && activeBottomPanelView !== 'thumbnails') ? 'animate-blinkBg' : ''}`}
               aria-label="Show thumbnails"
               title="Show thumbnails"
               disabled={images.length === 0}
             >
-              <Images size={16} className="mr-1 md:mr-2" /> {/* Adjusted icon margin for consistency */}
-              Thumbnails
+              <Images size={16} className="mr-1 md:mr-2" /> 
+              Uploads
+              {activeBottomPanelView === 'thumbnails' && <ChevronDown size={18} className="ml-1 animate-bounce" />}
             </button>
             <div className="w-px bg-black/10"></div>
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'history' ? 'closed' : 'history')}
               disabled={!selectedImageId || images.length === 0}
-              className={`flex-1 flex items-center justify-center text-sm px-4 md:px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'} ${(!selectedImageId || images.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`group flex-1 flex items-center justify-center text-sm px-4 md:px-6 transition-colors focus:outline-none h-full ${activeBottomPanelView === 'history' ? 'bg-venice-red/70 text-white' : 'text-slate-600 hover:bg-black/5'} ${(!selectedImageId || images.length === 0) ? 'opacity-50 cursor-not-allowed' : ''}`}
               aria-label="Show history"
               title="Show history"
             >
-              <History size={16} className="mr-1 md:mr-2" /> {/* Adjusted icon margin for consistency */}
+              <History size={16} className="mr-1 md:mr-2" /> 
               History
+              {activeBottomPanelView === 'history' && <ChevronDown size={18} className="ml-1 animate-bounce" />}
             </button>
           </div>
         </div>
