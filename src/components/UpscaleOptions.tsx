@@ -12,9 +12,9 @@ const UpscaleOptions: React.FC = () => {
     updateSettings,
     enhanceImages,
     images,
-    selectedImageId
+    selectedImageId,
+    isGeneratingPrompt // Added to use global scanning status for main action buttons
     // settings and promptGenerationError are now per-image
-    // isGeneratingPrompt (global flag) is no longer used here for disabling UI elements directly;
     // we now use selectedImage.status to determine if the *selected* image is scanning.
   } = useApp();
 
@@ -121,11 +121,16 @@ const UpscaleOptions: React.FC = () => {
                   <textarea
                     id="prompt"
                     rows={3}
-                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-venice-red focus:ring-venice-red sm:text-sm p-3 resize-none placeholder-gray-400 ${isSelectedImageScanning ? 'bg-gray-100 cursor-wait' : 'bg-white'}`}
-                    placeholder={isSelectedImageScanning ? "Analyzing image and generating prompt..." : currentPromptError ? "Error generating prompt. Check console or try again." : "Describe your desired style or leave blank for auto-magic..."}
+                    className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-venice-red focus:ring-venice-red sm:text-sm p-3 resize-none placeholder-gray-400 ${(selectedImage?.status === 'pending' || selectedImage?.status === 'scanning') ? 'bg-gray-100 cursor-wait' : 'bg-white'}`}
+                    placeholder={
+                      selectedImage?.status === 'pending' ? "Queued for analysis..." :
+                      selectedImage?.status === 'scanning' ? "Analyzing image and generating prompt..." :
+                      currentPromptError ? "Error generating prompt. Check console or try again." :
+                      "Describe your desired style or leave blank for auto-magic..."
+                    }
                     value={currentSettings.prompt || ''}
                     onChange={(e) => updateSettings({ prompt: e.target.value })}
-                    disabled={isSelectedImageScanning || !hasSelectedImage || isProcessing}
+                    disabled={!hasSelectedImage || selectedImage?.status === 'pending' || selectedImage?.status === 'scanning' || selectedImage?.status === 'processing'}
                   />
                   {isSelectedImageScanning && (
                     <div className="absolute inset-0 flex items-center justify-center bg-white/50">
@@ -184,7 +189,7 @@ const UpscaleOptions: React.FC = () => {
                   max="1"
                   step="0.05" // Step updated
                   value={currentSettings.creativity}
-                  disabled={!currentSettings.enhance || isSelectedImageScanning} // Creativity disabled if enhance is off or selected image is scanning
+                  disabled={!currentSettings.enhance || !hasSelectedImage || selectedImage?.status === 'pending' || selectedImage?.status === 'scanning' || selectedImage?.status === 'processing'} // Creativity disabled if enhance is off, no image, or image is pending/scanning/processing
                   onChange={(e) => updateSettings({ creativity: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
@@ -214,7 +219,7 @@ const UpscaleOptions: React.FC = () => {
                   max="1"
                   step="0.05" // Step updated
                   value={currentSettings.adherence}
-                  disabled={isSelectedImageScanning || !hasSelectedImage} // Adherence disabled if selected image is scanning or no image selected
+                  disabled={!hasSelectedImage || selectedImage?.status === 'pending' || selectedImage?.status === 'scanning' || selectedImage?.status === 'processing'} // Adherence disabled if no image, or image is pending/scanning/processing
                   onChange={(e) => updateSettings({ adherence: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-venice-beige rounded-lg appearance-none cursor-pointer accent-venice-bright-red"
                 />
@@ -244,7 +249,7 @@ const UpscaleOptions: React.FC = () => {
                 });
               }}
               className="w-4/5 xs:w-auto py-2 px-3 rounded-lg text-sm text-venice-olive-brown hover:bg-venice-beige/70 border border-venice-stone/50 transition-colors flex items-center justify-center"
-              disabled={isSelectedImageScanning || isProcessing || !hasSelectedImage} 
+              disabled={isGeneratingPrompt || isProcessing || !hasSelectedImage} 
               style={{minWidth: '30%'}}
             >
               Reset to Defaults
@@ -253,7 +258,7 @@ const UpscaleOptions: React.FC = () => {
               type="button"
               className={`
                w-4/5 xs:w-auto py-2 px-3 rounded-lg text-white font-semibold flex items-center justify-center transition-all text-sm
-                ${(!hasSelectedImage || isProcessing || isSelectedImageScanning || (!currentSettings.enhance && currentSettings.scale === '1x'))
+                ${(!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x'))
                   ? 'bg-venice-stone/70 cursor-not-allowed'
                   : 'bg-venice-bright-red hover:bg-d94f38 shadow-md hover:shadow-lg transform hover:scale-102'}
               `}
@@ -263,7 +268,7 @@ const UpscaleOptions: React.FC = () => {
                   enhanceImages([selectedImage.id], currentSettings.scale);
                 }
               }}
-              disabled={!hasSelectedImage || isProcessing || isSelectedImageScanning || (!currentSettings.enhance && currentSettings.scale === '1x')}
+              disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x')}
             >
               {isProcessing ? (
                 <>
