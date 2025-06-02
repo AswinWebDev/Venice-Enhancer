@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronDown, Wand2, Info, X, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { ScaleOption, EnhanceSettings } from '../types';
+import { ScaleOption, EnhanceSettings, ImageFile } from '../types';
 import Tooltip from './Tooltip';
 
 const UpscaleOptions: React.FC = () => {
@@ -26,7 +26,7 @@ const UpscaleOptions: React.FC = () => {
     prompt: "",
   };
 
-  const selectedImage = images.find(img => img.id === selectedImageId);
+  const selectedImage = images.find((img: ImageFile) => img.id === selectedImageId);
   const currentSettings = selectedImage?.settings || FALLBACK_SETTINGS;
   const currentPromptError = selectedImage?.status === 'error' && selectedImage?.error ? selectedImage.error : null;
   const isSelectedImageScanning = selectedImage?.status === 'scanning';
@@ -264,9 +264,8 @@ const UpscaleOptions: React.FC = () => {
               `}
               style={{minWidth: '45%'}}
               onClick={() => {
-                if (selectedImage && selectedImage.id && currentSettings) {
-                  enhanceImages([selectedImage.id], currentSettings.scale);
-                }
+                // selectedImageId and its settings are handled by enhanceImages in context
+                enhanceImages();
               }}
               disabled={!hasSelectedImage || isProcessing || isGeneratingPrompt || (!currentSettings.enhance && currentSettings.scale === '1x')}
             >

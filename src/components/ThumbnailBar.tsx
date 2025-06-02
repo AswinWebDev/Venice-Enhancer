@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { ImageFile } from '../types';
 import ThumbnailItem from './ThumbnailItem';
 import CompactHistoryView from './CompactHistoryView';
 import { Images, History, Plus } from 'lucide-react';
@@ -8,11 +9,11 @@ import { useDropzone } from 'react-dropzone';
 
 const ThumbnailBar: React.FC = () => {
   const { images, selectedImageId, selectImage, activeBottomPanelView, setActiveBottomPanelView, addImages, hasUnseenThumbnails } = useApp();
-  const selectedImage = images.find(img => img.id === selectedImageId);
+  const selectedImage = images.find((img: ImageFile) => img.id === selectedImageId);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
-    const imageFiles = acceptedFiles.filter(file =>
+    const imageFiles = acceptedFiles.filter((file: File) =>
       file.type.startsWith('image/')
     );
     if (imageFiles.length > 0) {
