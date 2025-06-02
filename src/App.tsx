@@ -25,7 +25,7 @@ function AppContent() {
     <div className="min-h-screen flex flex-col">
       <Header />
       
-      <main className="flex-grow w-full pt-4 pb-8">
+      <main className="flex-grow w-full pt-4 pb-8 mb-6">
         <div className="px-4 md:px-8 max-w-7xl xl:max-w-screen-2xl mx-auto">
           {images.length === 0 && (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] text-center px-4 py-12 sm:py-16 md:py-20" style={{paddingTop: '2rem'}}>
