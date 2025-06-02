@@ -42,7 +42,7 @@ const UpscaleOptions: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="bg-venice-white rounded-lg p-6 shadow-lg border border-venice-beige">
+      <div className="bg-venice-white rounded-lg p-6 shadow-lg border border-venice-beige 2xl:min-h-[399.46px]">
         {/* <h3 className="text-xl font-semibold text-venice-olive-brown mb-6">
           Enhancement Settings
         </h3> */}
