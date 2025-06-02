@@ -157,6 +157,7 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
 
   // --- Image Management Functions ---
   const addImages = async (files: File[]) => {
+    const isFirstUploadAttempt = images.length === 0; // Check if images array is currently empty
     setIsScanningModalOpen(true);
     const newImagesToAdd: ImageFile[] = [];
 
@@ -228,7 +229,10 @@ export const AppProvider = ({ children }: { children: ReactNode }): JSX.Element 
         setSelectedImageId(firstNewImage.id);
         // No direct prompt trigger here, queue will handle it.
       }
-      setHasUnseenThumbnails(true); // Indicate new images have been added
+      if (isFirstUploadAttempt && newImagesToAdd.length > 0) {
+        setHasUnseenThumbnails(true); // Indicate new images have been added on the first upload
+      }
+
     }
   };
 
