@@ -54,8 +54,8 @@ const ThumbnailBar: React.FC = () => {
           {/* Actual Button Strip - Narrower, Rounded Top, Glassmorphic */}
           <div
             className={`flex justify-center ${buttonStripHeightClass} w-full max-w-md /* Narrower width */
-                        bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-2xl rounded-t-[2rem] 
-                        border-x border-t border-white/25 dark:border-slate-700/25 overflow-hidden relative z-10`}
+                        dark:bg-slate-800/20 backdrop-blur-2xl shadow-2xl rounded-t-[2rem] 
+                        border-x border-t border-white/25 dark:border-slate-700/25 overflow-hidden relative z-10`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
           >
             <button
               onClick={() => setActiveBottomPanelView(activeBottomPanelView === 'thumbnails' ? 'closed' : 'thumbnails')}
@@ -88,8 +88,8 @@ const ThumbnailBar: React.FC = () => {
           {/* Middle Content Div: Handles opacity, background, borders, shadow */}
           <div
             className={`transition-[opacity,visibility] duration-500 ease-out w-full h-full 
-                        bg-white/20 dark:bg-slate-800/20 backdrop-blur-2xl shadow-lg /* Glassmorphic */
-                        ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible border-x border-b border-t border-white/25 dark:border-slate-700/25' : 'opacity-0 delay-500 invisible border-transparent'}`}
+                        dark:bg-slate-800/20 backdrop-blur-2xl shadow-lg /* Glassmorphic */
+                        ${activeBottomPanelView !== 'closed' ? 'opacity-100 visible border-x border-b border-t border-white/25 dark:border-slate-700/25' : 'opacity-0 delay-500 invisible border-transparent'}`} style={{ backgroundColor: 'rgba(243, 240, 221, 0.4)' }}
           >
             {/* Innermost Content Div: Handles padding and scrolling */}
             <div className={`h-40 ${activeBottomPanelView !== 'closed' ? 'p-2' : 'p-0'} overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400/50 dark:scrollbar-thumb-gray-500/50 scrollbar-track-transparent`}> 
