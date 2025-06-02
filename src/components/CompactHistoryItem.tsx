@@ -24,26 +24,26 @@ const CompactHistoryItem: React.FC<CompactHistoryItemProps> = ({ historyItem, or
   }
 
   return (
-    <div className="flex items-center p-2 bg-gray-50 rounded-lg shadow hover:shadow-md transition-shadow duration-200 space-x-3 min-w-[200px] max-w-[280px]">
+    <div className="flex items-center p-3 space-x-3 bg-white border border-gray-300 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 min-w-[240px] max-w-[320px]">
       <img 
         src={historyItem.enhancedUrl} 
         alt={`History ${historyItem.id}`} 
-        className="w-16 h-16 object-cover rounded-md border border-gray-300"
+        className="w-20 h-20 object-cover rounded-lg border border-gray-200 flex-shrink-0"
       />
-      <div className="flex-grow overflow-hidden">
-        <p className="text-xs font-semibold text-black truncate" title={operationLabel}>
+      <div className="flex-grow flex flex-col justify-center">
+        <p className="text-sm font-semibold text-gray-800 leading-snug" title={operationLabel}>
           {operationLabel}
         </p>
-        <p className="text-xs text-neutral-700">
+        <p className="text-xs text-gray-600 mt-0.5">
           {new Date(historyItem.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
       <button 
         onClick={handlePreview}
-        className="p-2 text-gray-600 dark:text-gray-300 hover:text-venice-red dark:hover:text-venice-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-venice-red-500 rounded-full transition-colors"
+        className="p-1.5 text-gray-500 hover:text-venice-red focus:outline-none focus-visible:ring-2 focus-visible:ring-venice-red-500 rounded-full transition-colors flex-shrink-0"
         title="Preview this version"
       >
-        <Eye size={20} />
+        <Eye size={22} />
       </button>
     </div>
   );
